@@ -18,15 +18,21 @@ export const generateTicketWithBarcode = async (req, res) => {
       includetext: true
     });
 
-    const doc = new PDFDocument({ size: [226, 600], margin: 10 });
+    // Disable default page and add custom sized one
+    const doc = new PDFDocument({ autoFirstPage: false });
+
+    // Adjust height here — tested value for thermal tickets:
+    const calculatedHeight = 370; 
+    doc.addPage({ size: [226, calculatedHeight], margin: 0 });
+
     const filePath = path.join('uploads', `${Date.now()}_ticket.pdf`);
     const stream = fs.createWriteStream(filePath);
     doc.pipe(stream);
 
-    // Add company name
+    // Company Name
     doc.fontSize(14).text(company_name, { align: 'center' });
 
-    // Fetch and add logo if available
+    // Logo
     if (logo) {
       try {
         const response = await axios.get(logo, { responseType: 'arraybuffer' });
@@ -37,8 +43,7 @@ export const generateTicketWithBarcode = async (req, res) => {
       }
     }
 
-    doc.fontSize(10);
-    doc.moveDown(0.5);
+    doc.fontSize(10).moveDown(0.5);
     doc.text(`Bus No: ${bus_no}`);
     doc.text(`Ticket No: ${ticketNo}`);
     doc.text(`Date & Time: ${new Date().toLocaleString()}`);
