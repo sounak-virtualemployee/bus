@@ -1,7 +1,7 @@
 import Conductor from "../models/Conductor.js";
-import bcrypt from 'bcryptjs';
+import bcrypt from "bcryptjs";
 
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
 
 export const createConductor = async (req, res) => {
   const admin = req.admin;
@@ -67,7 +67,7 @@ export const createConductor = async (req, res) => {
         number: conductor.number,
         company_name: conductor.company_name,
         logo: conductor.logo,
-        roles:conductor.roles
+        roles: conductor.roles,
       },
     });
   } catch (error) {
@@ -84,13 +84,13 @@ export const getAllConductors = async (req, res) => {
     const conductors = await Conductor.find({ company_name: adminCompanyName });
 
     res.status(200).json({
-      message: 'Conductors fetched successfully',
+      message: "Conductors fetched successfully",
       total: conductors.length,
       conductors,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -103,21 +103,20 @@ export const getConductorById = async (req, res) => {
 
     const conductor = await Conductor.findOne({
       _id: id,
-      company_name: adminCompanyName
+      company_name: adminCompanyName,
     });
 
     if (!conductor) {
-      return res.status(404).json({ message: 'Conductor not found' });
+      return res.status(404).json({ message: "Conductor not found" });
     }
 
     res.status(200).json({
-      message: 'Conductor fetched successfully',
-      conductor
+      message: "Conductor fetched successfully",
+      conductor,
     });
-
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -129,32 +128,31 @@ export const updateConductorById = async (req, res) => {
     // Find conductor with matching company_name and ID
     const conductor = await Conductor.findOne({
       _id: id,
-      company_name: adminCompanyName
+      company_name: adminCompanyName,
     });
 
     if (!conductor) {
-      return res.status(404).json({ message: 'Conductor not found or unauthorized' });
+      return res
+        .status(404)
+        .json({ message: "Conductor not found or unauthorized" });
     }
 
-    const {
-      name,
-      busname,
-      busnumber,
-      routename,
-      number,
-      password
-    } = req.body;
+    const { name, busname, busnumber, routename, number, password } = req.body;
 
     // Check for number duplication only if number is updated
     if (number && number !== conductor.number) {
       const existingConductor = await Conductor.findOne({
         number: number,
         company_name: adminCompanyName,
-        _id: { $ne: id } // Exclude current conductor from check
+        _id: { $ne: id }, // Exclude current conductor from check
       });
 
       if (existingConductor) {
-        return res.status(400).json({ message: 'This number already exists for another conductor' });
+        return res
+          .status(400)
+          .json({
+            message: "This number already exists for another conductor",
+          });
       }
 
       conductor.number = number;
@@ -173,13 +171,12 @@ export const updateConductorById = async (req, res) => {
     await conductor.save();
 
     res.status(200).json({
-      message: 'Conductor updated successfully',
-      conductor
+      message: "Conductor updated successfully",
+      conductor,
     });
-
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -191,20 +188,21 @@ export const deleteConductorById = async (req, res) => {
     // Find conductor by ID and company_name
     const conductor = await Conductor.findOne({
       _id: id,
-      company_name: adminCompanyName
+      company_name: adminCompanyName,
     });
 
     if (!conductor) {
-      return res.status(404).json({ message: 'Conductor not found or unauthorized' });
+      return res
+        .status(404)
+        .json({ message: "Conductor not found or unauthorized" });
     }
 
     await conductor.deleteOne();
 
-    res.status(200).json({ message: 'Conductor deleted successfully' });
-
+    res.status(200).json({ message: "Conductor deleted successfully" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -214,29 +212,37 @@ export const loginConductor = async (req, res) => {
     const { password } = req.body;
 
     if (!number || !password) {
-      return res.status(400).json({ message: 'Number and password are required' });
+      return res
+        .status(400)
+        .json({ message: "Number and password are required" });
     }
 
     const conductor = await Conductor.findOne({ number });
 
     if (!conductor) {
-      return res.status(404).json({ message: 'Conductor not found' });
+      return res.status(404).json({ message: "Conductor not found" });
     }
 
     const isMatch = await bcrypt.compare(password, conductor.password);
 
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid password' });
+      return res.status(400).json({ message: "Invalid password" });
     }
 
     const token = jwt.sign(
-      { id: conductor._id, number: conductor.number, role: conductor.roles },
+      {
+        id: conductor._id,
+        number: conductor.number,
+        role: conductor.roles,
+        company_name: conductor.company_name,
+        logo: conductor.logo,
+      },
       process.env.JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: "7d" }
     );
 
     res.status(200).json({
-      message: 'Login successful',
+      message: "Login successful",
       token,
       conductor: {
         id: conductor._id,
@@ -247,12 +253,11 @@ export const loginConductor = async (req, res) => {
         routename: conductor.routename,
         company_name: conductor.company_name,
         logo: conductor.logo,
-        roles: conductor.roles
-      }
+        roles: conductor.roles,
+      },
     });
-
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };

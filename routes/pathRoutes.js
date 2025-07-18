@@ -1,6 +1,7 @@
 import express from 'express';
-import { createPath, deletePathById, getAllPaths, getPathById, updatePathById } from '../controllers/pathController.js';
+import { calculateFare, createPath, deletePathById, getAllPaths, getPathById,  getPointsListByRouteName, updatePathById } from '../controllers/pathController.js';
 import protectAdmin from '../middlewares/adminAuthMiddleware.js';
+import protectConductor from '../middlewares/conductorAuthMiddleware.js';
 
 const router = express.Router();
 
@@ -13,5 +14,10 @@ router.get('/byid', protectAdmin, getPathById);
 router.patch('/update', protectAdmin, updatePathById);
 
 router.delete('/delete', protectAdmin, deletePathById);
+
+/// conductor
+router.get('/points-by-route', protectConductor , getPointsListByRouteName);
+
+router.post('/calculate-fare', protectConductor, calculateFare);
 
 export default router;
