@@ -1,0 +1,93 @@
+export function generateTicketHTML({ company_name, logo, bus_no, ticketNo, dateTime, from, to, fare }) {
+  const barcodeUrl = `https://bwipjs-api.metafloor.com/?bcid=code128&text=${ticketNo},${from}-${to}&scale=2&includetext`;
+
+  return `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Bus Ticket</title>
+    <style>
+      * {
+        font-size: 12px;
+        font-family: 'Times New Roman';
+      }
+      td, th, tr, table {
+        border-top: 1px solid black;
+        border-collapse: collapse;
+      }
+      td.description, th.description {
+        width: 75px;
+        max-width: 75px;
+      }
+      td.quantity, th.quantity {
+        width: 40px;
+        max-width: 40px;
+        word-break: break-word;
+      }
+      td.price, th.price {
+        width: 40px;
+        max-width: 40px;
+        word-break: break-word;
+      }
+      .centered {
+        text-align: center;
+        align-content: center;
+      }
+      .ticket {
+        width: 155px;
+        max-width: 155px;
+      }
+      img {
+        max-width: inherit;
+        width: inherit;
+      }
+      @media print {
+        .hidden-print, .hidden-print * {
+          display: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="ticket">
+      <img src="${logo}" alt="Company Logo">
+      <p class="centered">
+        ${company_name}<br>
+        Bus No: ${bus_no}
+      </p>
+      <table>
+        <tbody>
+          <tr>
+            <td class="description">From</td>
+            <td class="price">${from}</td>
+          </tr>
+          <tr>
+            <td class="description">To</td>
+            <td class="price">${to}</td>
+          </tr>
+          <tr>
+            <td class="description">Fare</td>
+            <td class="price">₹${fare}</td>
+          </tr>
+          <tr>
+            <td class="description">Ticket No</td>
+            <td class="price">${ticketNo}</td>
+          </tr>
+          <tr>
+            <td class="description">Date & Time</td>
+            <td class="price">${dateTime}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="centered">
+        Thank You!<br>
+        ${company_name}
+      </p>
+      <div class="centered">
+        <img src="${barcodeUrl}" alt="Barcode">
+      </div>
+    </div>
+  </body>
+  </html>`;
+}

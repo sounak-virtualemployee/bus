@@ -6,14 +6,8 @@ import path from 'path';
 export const generateTicketWithBarcode = async (req, res) => {
   try {
     const { company_name, logo, bus_no, from, to, fare } = req.body;
-
-    // Generate ticket number
     const ticketNo = Math.floor(1000000 + Math.random() * 9000000).toString();
-
-    // Barcode content
     const barcodeData = `${ticketNo},${from}-${to}`;
-
-    // Generate barcode buffer
     const barcodeBuffer = await bwipjs.toBuffer({
       bcid: 'code128',
       text: barcodeData,
@@ -22,33 +16,40 @@ export const generateTicketWithBarcode = async (req, res) => {
       includetext: true
     });
 
-    // Create PDF
-    const doc = new PDFDocument({ size: [226, 600] });
+    const doc = new PDFDocument({ size: [226, 600], margin: 10 });
     const filePath = path.join('uploads', `${Date.now()}_ticket.pdf`);
     const stream = fs.createWriteStream(filePath);
-
     doc.pipe(stream);
 
-    // Add company name and logo
+    // Title & Logo
     doc.fontSize(14).text(company_name, { align: 'center' });
     if (logo) {
       try {
-        doc.image(logo, { fit: [100, 50], align: 'center' });
+        doc.image(logo, { fit: [100, 50], align: 'center', valign: 'center' });
       } catch {
-        // Ignore image error
+        // Ignore image errors
       }
     }
 
-    // Add ticket details
-    doc.moveDown().fontSize(12).text(`Bus No: ${bus_no}`);
-    doc.text(`Ticket No: ${ticketNo}`);
-    doc.text(`Date & Time: ${new Date().toLocaleString()}`);
-    doc.text(`From: ${from}`);
-    doc.text(`To: ${to}`);
-    doc.text(`Fare: ₹${fare}`);
+    // Draw structured box layout
+    doc.fontSize(10);
 
-    // Add barcode image
+    doc.moveDown(0.5);
+    doc.text(`Bus No: ${bus_no}`, { align: 'left' });
+    doc.text(`Ticket No: ${ticketNo}`, { align: 'left' });
+    doc.text(`Date & Time: ${new Date().toLocaleString()}`, { align: 'left' });
+    doc.text(`From: ${from}`, { align: 'left' });
+    doc.text(`To: ${to}`, { align: 'left' });
+    doc.text(`Fare: ₹${fare}`, { align: 'left' });
+
+    // Barcode at the bottom
+    doc.moveDown(1);
     doc.image(barcodeBuffer, { width: 180, align: 'center' });
+
+    // Footer
+    doc.moveDown(0.5);
+    doc.fontSize(10).text(`Thank You!`, { align: 'center' });
+    doc.fontSize(10).text(company_name, { align: 'center' });
 
     doc.end();
 

@@ -1,5 +1,5 @@
 import express from 'express';
-import { generateTicketWithBarcode } from '../controllers/pdfController.js';
+import {  generateTicketWithBarcode } from '../controllers/pdfController.js';
 
 const router = express.Router();
 
