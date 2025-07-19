@@ -1,8 +1,8 @@
 import express from 'express';
-import {  generateTicketWithBarcode } from '../controllers/pdfController.js';
+import {  generateTicket } from '../controllers/pdfController.js';
 
 const router = express.Router();
 
-router.post('/generate-ticket', generateTicketWithBarcode);
+router.post('/generate-ticket', generateTicket);
 
 export default router;
