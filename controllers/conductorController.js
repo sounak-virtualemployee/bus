@@ -2,7 +2,7 @@ import Conductor from "../models/Conductor.js";
 import bcrypt from "bcryptjs";
 
 import jwt from "jsonwebtoken";
-import Path from "../models/path.js";
+import Path from "../models/Path.js";
 import mongoose from "mongoose";
 
 export const createConductor = async (req, res) => {

@@ -1,5 +1,5 @@
 import Fare from '../models/Fare.js';
-import Path from '../models/path.js';
+import Path from '../models/Path.js';
 
 export const createFare = async (req, res) => {
   try {

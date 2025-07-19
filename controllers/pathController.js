@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import Path from '../models/path.js';
+import Path from '../models/Path.js';
 import Fare from '../models/Fare.js';
 
 // Create Path
