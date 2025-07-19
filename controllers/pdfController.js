@@ -7,6 +7,7 @@ import axios from 'axios';
 export const generateTicketWithBarcode = async (req, res) => {
   try {
     const { company_name, logo, bus_no, from, to, fare } = req.body;
+
     const ticketNo = Math.floor(1000000 + Math.random() * 9000000).toString();
     const barcodeData = `${ticketNo},${from}-${to}`;
 
@@ -15,21 +16,18 @@ export const generateTicketWithBarcode = async (req, res) => {
       text: barcodeData,
       scale: 2,
       height: 10,
-      includetext: true
+      includetext: true,
     });
 
-    // Disable default page and add custom sized one
     const doc = new PDFDocument({ autoFirstPage: false });
-
-    // Adjust height here — tested value for thermal tickets:
-    const calculatedHeight = 370; 
-    doc.addPage({ size: [226, calculatedHeight], margin: 0 });
+    const pageHeight = 420;
+    doc.addPage({ size: [226, pageHeight], margin: 0 });
 
     const filePath = path.join('uploads', `${Date.now()}_ticket.pdf`);
     const stream = fs.createWriteStream(filePath);
     doc.pipe(stream);
 
-    // Company Name
+    // Header - Company Name (center)
     doc.fontSize(14).text(company_name, { align: 'center' });
 
     // Logo
@@ -37,26 +35,50 @@ export const generateTicketWithBarcode = async (req, res) => {
       try {
         const response = await axios.get(logo, { responseType: 'arraybuffer' });
         const logoBuffer = Buffer.from(response.data);
-        doc.image(logoBuffer, { fit: [100, 50], align: 'center' });
+        doc.image(logoBuffer, doc.page.width / 2 - 50, doc.y + 5, { width: 100 }); // center manually
       } catch (err) {
         console.error("Logo fetch failed:", err.message);
       }
     }
 
-    doc.fontSize(10).moveDown(0.5);
-    doc.text(`Bus No: ${bus_no}`);
-    doc.text(`Ticket No: ${ticketNo}`);
-    doc.text(`Date & Time: ${new Date().toLocaleString()}`);
-    doc.text(`From: ${from}`);
-    doc.text(`To: ${to}`);
-    doc.text(`Fare: ₹${fare}`);
-
     doc.moveDown(1);
-    doc.image(barcodeBuffer, { width: 180, align: 'center' });
+
+    // Bus No. Centered
+    doc.fontSize(12).text(`Bus No: ${bus_no}`, { align: 'center' });
 
     doc.moveDown(0.5);
+
+    // Ticket Info - Centered
+    doc.fontSize(10);
+    doc.text(`Ticket No: ${ticketNo}`, { align: 'center' });
+    doc.text(`Date & Time: ${new Date().toLocaleString()}`, { align: 'center' });
+    doc.text(`From: ${from}`, { align: 'center' });
+    doc.text(`To: ${to}`, { align: 'center' });
+
+    // Fare + GST + Total Fare
+    const fareValue = parseFloat(fare);
+    const gst = parseFloat((fareValue * 0.05).toFixed(2));
+    const total = parseFloat((fareValue + gst).toFixed(2));
+
+    doc.moveDown(0.5);
+    doc.text(`Fare: ₹${fareValue.toFixed(2)}`, { align: 'center' });
+    doc.text(`GST @ 5%: ₹${gst.toFixed(2)}`, { align: 'center' });
+    doc.font('Helvetica-Bold').text(`Total Fare: ₹${total.toFixed(2)}`, { align: 'center' });
+    doc.font('Helvetica');
+
+    // Add some spacing before barcode
+    doc.moveDown(1);
+
+    // Barcode - Bottom Centered
+    const barcodeWidth = 180;
+    const barcodeX = (doc.page.width - barcodeWidth) / 2;
+    const barcodeY = doc.page.height - 90;
+    doc.image(barcodeBuffer, barcodeX, barcodeY, { width: barcodeWidth });
+
+    // Footer
+    doc.moveDown(1.5);
     doc.fontSize(10).text(`Thank You!`, { align: 'center' });
-    doc.fontSize(10).text(company_name, { align: 'center' });
+    doc.text(company_name, { align: 'center' });
 
     doc.end();
 
