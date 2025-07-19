@@ -1,26 +1,19 @@
 import mongoose from 'mongoose';
 
-const pointSchema = new mongoose.Schema({
-  end: {
-    type: String,
-    required: true
-  },
-  fare: {
-    type: Number,
-    required: true
-  }
-});
-
 const pathSchema = new mongoose.Schema({
   route_name: {
     type: String,
-    required: true
+    required: true,
+    unique: true,
   },
-  start: {
-    type: String,
-    required: true
+  points: {
+    type: [String],
+    required: true,
+    validate: {
+      validator: arr => arr.length > 1,
+      message: 'At least two points are required for a path',
+    }
   },
-  points: [pointSchema],
   company_name: {
     type: String,
     required: true
@@ -32,5 +25,4 @@ const pathSchema = new mongoose.Schema({
 });
 
 const Path = mongoose.model('Path', pathSchema);
-
 export default Path;

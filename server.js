@@ -8,8 +8,9 @@ import connectDB from "./config/db.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import conductorRoutes from "./routes/conductorRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
-import pathRoutes from "./routes/pathRoutes.js";
+import fareRoutes from "./routes/fareRoutes.js";
 import pdfRoutes from "./routes/pdfRoutes.js";
+import pathRoutes from "./routes/pathRoutes.js";
 
 
 dotenv.config();
@@ -24,12 +25,14 @@ app.use(express.json());
 app.use("/api/admin", adminRoutes);
 app.use("/api/conductor", conductorRoutes);
 app.use("/api/auth",authRoutes)
+app.use("/api/fare",fareRoutes)
 app.use("/api/path",pathRoutes)
+
 app.use('/uploads', express.static('uploads'));
 
 app.use("/api/pdf",pdfRoutes)
 
-const PORT = process.env.PORT || 5000;
-app.listen(5000, '0.0.0.0', () => {
+const PORT = process.env.PORT || 6000;
+app.listen(6000, '0.0.0.0', () => {
     console.log("Server running on port 5000");
 });

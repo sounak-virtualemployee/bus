@@ -1,216 +1,188 @@
-import Path from "../models/Path.js";
+import mongoose from 'mongoose';
+import Path from '../models/path.js';
+import Fare from '../models/Fare.js';
 
+// Create Path
 export const createPath = async (req, res) => {
   try {
-    const { route_name, start, points } = req.body;
+    const { route_name, points } = req.body;
     const adminCompanyName = req.admin.company_name;
-    const adminLogo = req.admin.logo;
 
-    // Validation
-    if (!route_name || !start || !points || !Array.isArray(points) || points.length === 0) {
-      return res.status(400).json({ message: 'All fields are required: route_name, start, and points[]' });
+    if (!route_name || !points || !Array.isArray(points) || points.length < 2) {
+      return res.status(400).json({ message: 'Route name and at least 2 points are required' });
     }
 
-    // Check for duplicate route name under the same company
-    const existingPath = await Path.findOne({
-      route_name,
-      company_name: adminCompanyName
-    });
-
-    if (existingPath) {
+    const existing = await Path.findOne({ route_name, company_name: adminCompanyName });
+    if (existing) {
       return res.status(400).json({ message: 'Route name already exists under your company' });
     }
 
     const path = new Path({
       route_name,
-      start,
       points,
       company_name: adminCompanyName,
-      logo: adminLogo
     });
 
     await path.save();
-
-    res.status(201).json({
-      message: 'Path created successfully',
-      path
-    });
-
-  } catch (error) {
-    console.error(error);
+    res.status(201).json({ message: 'Path created successfully', path });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
+// Get All Paths
 export const getAllPaths = async (req, res) => {
   try {
-    const adminCompanyName = req.admin.company_name;
-
-    const paths = await Path.find({ company_name: adminCompanyName });
-
-    res.status(200).json({
-      message: 'Paths fetched successfully',
-      total: paths.length,
-      paths
-    });
-  } catch (error) {
-    console.error(error);
+    const paths = await Path.find({ company_name: req.admin.company_name });
+    res.status(200).json(paths);
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
+// Get Path by ID
 export const getPathById = async (req, res) => {
   try {
-    const { id } = req.query;
-    const adminCompanyName = req.admin.company_name;
-
-    const path = await Path.findOne({
-      _id: id,
-      company_name: adminCompanyName
-    });
-
+    const path = await Path.findOne({ _id: req.query.id, company_name: req.admin.company_name });
     if (!path) {
-      return res.status(404).json({ message: 'Path not found or unauthorized' });
+      return res.status(404).json({ message: 'Path not found' });
     }
-
-    res.status(200).json({
-      message: 'Path fetched successfully',
-      path
-    });
-  } catch (error) {
-    console.error(error);
+    res.status(200).json(path);
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
+// Update Path by ID
 export const updatePathById = async (req, res) => {
   try {
+    const { route_name, points } = req.body;
     const { id } = req.query;
-    const adminCompanyName = req.admin.company_name;
 
-    const path = await Path.findOne({
-      _id: id,
-      company_name: adminCompanyName
-    });
-
+    const path = await Path.findOne({ _id: id, company_name: req.admin.company_name });
     if (!path) {
       return res.status(404).json({ message: 'Path not found or unauthorized' });
     }
 
-    const { route_name, start, points } = req.body;
-
     if (route_name !== undefined) path.route_name = route_name;
-    if (start !== undefined) path.start = start;
-    if (Array.isArray(points)) path.points = points;
+    if (points !== undefined && Array.isArray(points) && points.length >= 2) {
+      path.points = points;
+    }
 
     await path.save();
-
-    res.status(200).json({
-      message: 'Path updated successfully',
-      path
-    });
-  } catch (error) {
-    console.error(error);
+    res.status(200).json({ message: 'Path updated successfully', path });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
+// Delete Path
 export const deletePathById = async (req, res) => {
   try {
     const { id } = req.query;
-    const adminCompanyName = req.admin.company_name;
-
-    const path = await Path.findOne({
-      _id: id,
-      company_name: adminCompanyName
-    });
-
+    const path = await Path.findOneAndDelete({ _id: id, company_name: req.admin.company_name });
     if (!path) {
       return res.status(404).json({ message: 'Path not found or unauthorized' });
     }
-
-    await path.deleteOne();
-
-    res.status(200).json({ message: 'Path deleted successfully' });
-
-  } catch (error) {
-    console.error(error);
+    res.status(200).json({ message: 'Path deleted successfully', path });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
 /// for conductor 
 
-export const getPointsListByRouteName = async (req, res) => {
+export const getPointsListByPathId = async (req, res) => {
   try {
-    const { route_name } = req.query;
+    const { path_id } = req.query;
 
-    if (!route_name) {
-      return res.status(400).json({ message: 'Route name is required' });
+    if (!path_id || !mongoose.Types.ObjectId.isValid(path_id)) {
+      return res.status(400).json({ message: 'Valid path_id is required' });
     }
 
     const conductorCompanyName = req.conductor.company_name;
 
     const path = await Path.findOne({
-      route_name,
+      _id: path_id,
       company_name: conductorCompanyName
     });
 
     if (!path) {
-      return res.status(404).json({ message: 'Route not found or unauthorized' });
+      return res.status(404).json({ message: 'Path not found or unauthorized' });
     }
 
-    // Build ordered point list: [start, ...points.end] with no fare
-    const allPoints = [path.start, ...path.points.map(point => point.end)];
-
+    // Return points as per DB order
     res.status(200).json({
       message: 'Points list fetched successfully',
-      points: allPoints
+      points: path.points
     });
 
   } catch (error) {
-    console.error(error);
+    console.error('Error fetching points:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-export const calculateFare = async (req, res) => {
+export const calculateFareByPathId = async (req, res) => {
   try {
-    const { route_name, from, to } = req.body;
+    const { path_id, from, to, journey } = req.body;
     const company_name = req.conductor.company_name;
 
-    const path = await Path.findOne({ route_name, company_name });
-
-    if (!path) {
-      return res.status(404).json({ message: 'Route not found' });
+    if (!path_id || !from || !to || !journey) {
+      return res.status(400).json({ message: "path_id, from, to, and journey are required" });
     }
 
-    const routePoints = [{ end: path.start, fare: 0 }, ...path.points];
+    if (!["up", "down"].includes(journey.toLowerCase())) {
+      return res.status(400).json({ message: "Journey must be 'up' or 'down'" });
+    }
 
-    const fromIndex = routePoints.findIndex(p => p.end === from);
-    const toIndex = routePoints.findIndex(p => p.end === to);
+    // 1. Find path with matching ID and company_name
+    const path = await Path.findOne({ _id: path_id, company_name });
+    if (!path) {
+      return res.status(404).json({ message: "Path not found or unauthorized" });
+    }
+
+    // 2. Handle direction
+    const points = [...path.points];
+    if (journey.toLowerCase() === "down") points.reverse();
+
+    // 3. Find index of from and to
+    const fromIndex = points.indexOf(from);
+    const toIndex = points.indexOf(to);
 
     if (fromIndex === -1 || toIndex === -1) {
-      return res.status(400).json({ message: 'Invalid from/to point' });
+      return res.status(400).json({ message: "Invalid 'from' or 'to' point" });
     }
 
-    let totalFare = 0;
-
-    if (fromIndex < toIndex) {
-      for (let i = fromIndex + 1; i <= toIndex; i++) {
-        totalFare += routePoints[i].fare;
-      }
-    } else if (fromIndex > toIndex) {
-      for (let i = fromIndex; i > toIndex; i--) {
-        totalFare += routePoints[i].fare;
-      }
-    } else {
-      totalFare = 0;
+    if (fromIndex === toIndex) {
+      return res.status(200).json({ total_fare: 0, message: "Same pickup and drop points" });
     }
 
-    res.status(200).json({ total_fare: totalFare });
+    const segmentCount = Math.abs(toIndex - fromIndex);
+    const fareIndex = segmentCount - 1;
+
+    // 4. Get fare
+    const fareData = await Fare.findOne({ path: path_id, company_name });
+    if (!fareData || !fareData.fares || fareIndex >= fareData.fares.length) {
+      return res.status(404).json({ message: "Fare not available for this segment" });
+    }
+
+    const totalFare = fareData.fares[fareIndex];
+
+    res.status(200).json({
+      from,
+      to,
+      journey: journey.toLowerCase(),
+      total_fare: totalFare
+    });
+
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Fare calculation error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };

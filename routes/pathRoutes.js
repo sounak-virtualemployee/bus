@@ -1,23 +1,30 @@
-import express from 'express';
-import { calculateFare, createPath, deletePathById, getAllPaths, getPathById,  getPointsListByRouteName, updatePathById } from '../controllers/pathController.js';
-import protectAdmin from '../middlewares/adminAuthMiddleware.js';
-import protectConductor from '../middlewares/conductorAuthMiddleware.js';
+import express from "express";
+import {
+  calculateFareByPathId,
+  createPath,
+  deletePathById,
+  getAllPaths,
+  getPathById,
+  getPointsListByPathId,
+  updatePathById,
+} from "../controllers/pathController.js";
+import protectAdmin from "../middlewares/adminAuthMiddleware.js";
+import protectConductor from "../middlewares/conductorAuthMiddleware.js";
 
 const router = express.Router();
 
-router.post('/create', protectAdmin, createPath);
+router.post("/create", protectAdmin, createPath);
 
-router.get('/all', protectAdmin, getAllPaths);
+router.get("/all", protectAdmin, getAllPaths);
+router.get("/byid", protectAdmin, getPathById);
 
-router.get('/byid', protectAdmin, getPathById);
+router.patch("/update", protectAdmin, updatePathById);
 
-router.patch('/update', protectAdmin, updatePathById);
-
-router.delete('/delete', protectAdmin, deletePathById);
+router.delete("/delete", protectAdmin, deletePathById);
 
 /// conductor
-router.get('/points-by-route', protectConductor , getPointsListByRouteName);
+router.get("/points-by-route", protectConductor, getPointsListByPathId);
 
-router.post('/calculate-fare', protectConductor, calculateFare);
+router.post("/calculate-fare", protectConductor, calculateFareByPathId);
 
 export default router;

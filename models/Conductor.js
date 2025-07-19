@@ -1,5 +1,5 @@
-import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
 const conductorSchema = new mongoose.Schema({
   name: {
@@ -14,10 +14,7 @@ const conductorSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  routename: {
-    type: String,
-    required: true,
-  },
+  path: { type: mongoose.Schema.Types.ObjectId, ref: "Path", required: true }, // mapped with Path
   number: {
     type: String,
     required: true,
@@ -33,22 +30,22 @@ const conductorSchema = new mongoose.Schema({
   },
   logo: {
     type: String,
-    default: '',
+    default: "",
   },
-   roles: {
+  roles: {
     type: String,
-    default: 'conductor'
+    default: "conductor",
   },
 });
 
 // Hash password before saving
-conductorSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+conductorSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });
 
-const Conductor = mongoose.model('Conductor', conductorSchema);
+const Conductor = mongoose.model("Conductor", conductorSchema);
 
 export default Conductor;
