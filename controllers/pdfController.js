@@ -20,18 +20,21 @@ export const generateTicket = async (req, res) => {
       includetext: true,
     });
 
-    const doc = new PDFDocument({ autoFirstPage: false });
-    const pageHeight = 440;
-    doc.addPage({ size: [226, pageHeight], margin: 0 });
+    const uploadDir = path.join('uploads');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir);
+    }
 
-    const filePath = path.join('uploads', `${Date.now()}_ticket.pdf`);
+    const fileName = `${Date.now()}_ticket.pdf`;
+    const filePath = path.join(uploadDir, fileName);
     const stream = fs.createWriteStream(filePath);
+
+    const doc = new PDFDocument({ autoFirstPage: false });
+    doc.addPage({ size: [226, 440], margin: 0 });
     doc.pipe(stream);
 
-    // HEADER
     doc.fontSize(14).text(company_name, { align: 'center' });
 
-    // Optional Logo
     if (logo) {
       try {
         const response = await axios.get(logo, { responseType: 'arraybuffer' });
@@ -53,8 +56,7 @@ export const generateTicket = async (req, res) => {
     doc.text(`To: ${to}`, { align: 'center' });
     doc.text(`Passengers: ${count}`, { align: 'center' });
 
-    // PRICING
-    const baseFare = parseFloat(fare) * parseInt(count);
+    const baseFare = parseFloat(fare) * parseFloat(count);
     const gst = parseFloat((baseFare * 0.05).toFixed(2));
     const total = parseFloat((baseFare + gst).toFixed(2));
 
@@ -64,14 +66,11 @@ export const generateTicket = async (req, res) => {
     doc.font('Helvetica-Bold').text(`Total Fare: ₹${total.toFixed(2)}`, { align: 'center' });
     doc.font('Helvetica');
 
-    // BARCODE
     doc.moveDown(1);
     const barcodeWidth = 180;
     const barcodeX = (doc.page.width - barcodeWidth) / 2;
-    const barcodeY = doc.page.height - 90;
-    doc.image(barcodeBuffer, barcodeX, barcodeY, { width: barcodeWidth });
+    doc.image(barcodeBuffer, barcodeX, doc.page.height - 90, { width: barcodeWidth });
 
-    // FOOTER
     doc.moveDown(1.5);
     doc.fontSize(10).text(`Thank You!`, { align: 'center' });
     doc.text(company_name, { align: 'center' });
@@ -88,14 +87,14 @@ export const generateTicket = async (req, res) => {
         count,
         fare: baseFare,
         gst,
-        total
+        total,
       });
 
       await ticket.save();
 
       res.status(200).json({
         message: 'Ticket PDF generated successfully',
-        pdf_url: `${process.env.BASE_URL}/${filePath}`,
+        pdf_url: `${process.env.BASE_URL}/uploads/${fileName}`,
         ticket_no: ticketNo,
         total_fare: total,
       });

@@ -7,13 +7,13 @@ const ticketSchema = new mongoose.Schema({
   from: String,
   to: String,
   count: Number,
-  fare: Number,       // total fare (fare * count)
-  gst: Number,        // 5% GST on fare
-  total: Number,      // fare + gst
+  fare: Number,
+  gst: Number,
+  total: Number,
   createdAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
 export default mongoose.model('Ticket', ticketSchema);
