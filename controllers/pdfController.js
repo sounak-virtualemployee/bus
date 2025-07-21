@@ -21,7 +21,7 @@ export const generateTicket = async (req, res) => {
 
     res.status(200).json({
       message: 'Ticket stored in database successfully',
-      ticket_no: ticketNo,
+      ticket_no,
       total_fare: total,
     });
   } catch (error) {
