@@ -8,7 +8,6 @@ const ticketSchema = new mongoose.Schema({
   to: String,
   count: Number,
   fare: Number,
-  gst: Number,
   total: Number,
   createdAt: {
     type: Date,

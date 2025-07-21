@@ -224,14 +224,14 @@ export const loginConductor = async (req, res) => {
         .json({ message: "Number and password are required" });
     }
 
-    const conductor = await Conductor.findOne({ number });
+    // Find conductor and populate the path
+    const conductor = await Conductor.findOne({ number }).populate("path");
 
     if (!conductor) {
       return res.status(404).json({ message: "Conductor not found" });
     }
 
     const isMatch = await bcrypt.compare(password, conductor.password);
-
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid password" });
     }
@@ -257,8 +257,8 @@ export const loginConductor = async (req, res) => {
         number: conductor.number,
         busname: conductor.busname,
         busnumber: conductor.busnumber,
-        routename: conductor.routename,
-        path:conductor.path,
+        path_id: conductor.path._id,
+        route_name: conductor.path.route_name,
         company_name: conductor.company_name,
         logo: conductor.logo,
         roles: conductor.roles,

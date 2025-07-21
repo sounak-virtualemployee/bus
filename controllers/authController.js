@@ -39,6 +39,7 @@ export const checkNumber = async (req, res) => {
           busname: conductor.busname,
           busnumber: conductor.busnumber,
           routename: conductor.routename,
+          logo: conductor.logo,
           number: conductor.number,
           roles: conductor.roles,
         },
