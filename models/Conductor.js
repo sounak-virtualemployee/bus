@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
 
 const conductorSchema = new mongoose.Schema({
   name: {
@@ -14,7 +13,11 @@ const conductorSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  path: { type: mongoose.Schema.Types.ObjectId, ref: "Path", required: true }, // mapped with Path
+  path: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Path",
+    required: true,
+  },
   number: {
     type: String,
     required: true,
@@ -36,14 +39,6 @@ const conductorSchema = new mongoose.Schema({
     type: String,
     default: "conductor",
   },
-});
-
-// Hash password before saving
-conductorSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-  next();
 });
 
 const Conductor = mongoose.model("Conductor", conductorSchema);

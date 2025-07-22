@@ -73,11 +73,10 @@ export const getAllConductors = async (req, res) => {
   try {
     const adminCompanyName = req.admin.company_name;
 
-    // Fetch conductors for the company and populate route details
     const conductors = await Conductor.find({ company_name: adminCompanyName })
       .populate({
         path: 'path',
-        select: 'route_name ' // Select only needed fields from Path
+        select: 'route_name'
       });
 
     res.status(200).json({
@@ -90,6 +89,7 @@ export const getAllConductors = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 export const getConductorById = async (req, res) => {
   try {
@@ -231,11 +231,12 @@ export const loginConductor = async (req, res) => {
       return res.status(404).json({ message: "Conductor not found" });
     }
 
-    const isMatch = await bcrypt.compare(password, conductor.password);
-    if (!isMatch) {
+    // Directly compare plain-text passwords
+    if (conductor.password !== password) {
       return res.status(400).json({ message: "Invalid password" });
     }
 
+    // Generate token
     const token = jwt.sign(
       {
         id: conductor._id,

@@ -40,7 +40,7 @@ app.use("/api/pdf",pdfRoutes)
 app.get("/", (req, res) => {
   res.json({ message: "Hello The Backend Is In Running Condition" });
 });
-const PORT = process.env.PORT || 7000;
+const PORT = process.env.PORT ;
 app.listen(PORT, '0.0.0.0', () => {
     console.log("Server running on port 7000");
 });
