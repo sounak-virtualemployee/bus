@@ -4,8 +4,6 @@ export const generateTicket = async (req, res) => {
   try {
     const { company_name, ticket_no, bus_no, from, to, fare, count,total } = req.body;
 
-   
-
     const ticket = new Ticket({
       ticket_no,
       company_name,
