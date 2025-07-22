@@ -9,6 +9,11 @@ const ticketSchema = new mongoose.Schema({
   count: Number,
   fare: Number,
   total: Number,
+  conductor_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Conductor', // 🔗 This maps to the Conductor model
+    required: true,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

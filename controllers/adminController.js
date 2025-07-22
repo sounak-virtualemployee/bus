@@ -1,6 +1,8 @@
 import Admin from "../models/Admin.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import Conductor from "../models/Conductor.js";
+import Ticket from "../models/Ticket.js";
 
 export const createAdmin = async (req, res) => {
   try {
@@ -86,6 +88,81 @@ export const loginAdmin = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+
+export const getDashboardStats = async (req, res) => {
+  try {
+    const company_name = req.admin.company_name; // from token (middleware)
+console.log(company_name);
+
+    // 1. Total Conductors
+    const totalConductors = await Conductor.countDocuments({ company_name });
+
+    // Today's Date Range
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    // 2. Active Conductors Today (distinct conductor_id)
+    const activeConductorIdsToday = await Ticket.distinct("conductor_id", {
+      company_name,
+      createdAt: { $gte: todayStart, $lte: todayEnd },
+    });
+    const activeConductorsToday = activeConductorIdsToday.length;
+
+    // 3. Total Income Today
+    const ticketsToday = await Ticket.aggregate([
+      {
+        $match: {
+          company_name,
+          createdAt: { $gte: todayStart, $lte: todayEnd },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalIncome: { $sum: "$total" },
+        },
+      },
+    ]);
+    const totalIncomeToday = ticketsToday[0]?.totalIncome || 0;
+
+    // 4. Monthly Income (for current month)
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    const monthlyTickets = await Ticket.aggregate([
+      {
+        $match: {
+          company_name,
+          createdAt: { $gte: monthStart, $lt: nextMonthStart },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          monthlyIncome: { $sum: "$total" },
+        },
+      },
+    ]);
+    const monthlyIncome = monthlyTickets[0]?.monthlyIncome || 0;
+
+    // 📦 Send response
+    res.status(200).json({
+      message: "Dashboard stats fetched",
+      totalConductors,
+      activeConductorsToday,
+      totalIncomeToday,
+      monthlyIncome,
+    });
+  } catch (error) {
+    console.error("Dashboard error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
