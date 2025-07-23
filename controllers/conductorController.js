@@ -143,7 +143,7 @@ export const updateConductorById = async (req, res) => {
       const existingConductor = await Conductor.findOne({
         number,
         company_name: adminCompanyName,
-        _id: { $ne: id }, // exclude current conductor
+        _id: { $ne: id },
       });
 
       if (existingConductor) {
@@ -159,11 +159,7 @@ export const updateConductorById = async (req, res) => {
     if (busname !== undefined) conductor.busname = busname;
     if (busnumber !== undefined) conductor.busnumber = busnumber;
     if (path !== undefined) conductor.path = path;
-
-    if (password) {
-      const salt = await bcrypt.genSalt(10);
-      conductor.password = await bcrypt.hash(password, salt);
-    }
+    if (password !== undefined) conductor.password = password; // ✅ Save plain text
 
     await conductor.save();
 
