@@ -30,4 +30,4 @@ const fareSchema = new mongoose.Schema({
 });
 
 const Fare = mongoose.model('Fare', fareSchema);
-export default fareSchema;
+export default Fare;

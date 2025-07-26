@@ -1,9 +1,10 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { getModel } from "../config/dbConnection.js";
+import Conductor from "../models/Conductor.js";
+import Ticket from "../models/Ticket.js";
+import Admin from "../models/Admin.js";
 
-const Admin = getModel("Pratima","Admin");
-const Conductor = getModel("Pratima","Conductor");
+
 
 export const createAdmin = async (req, res) => {
   try {
@@ -99,7 +100,6 @@ export const getDashboardStats = async (req, res) => {
     
   try {
     const company_name = req.admin.company_name; // from token (middleware)
-      const Ticket = getModel(company_name, "Ticket");
 
       console.log(company_name);
 

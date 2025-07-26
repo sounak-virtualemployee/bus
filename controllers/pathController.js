@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
 import { getModel } from "../config/dbConnection.js";
+import Path from "../models/Path.js";
+import Fare from "../models/Fare.js";
 
 // Create Path
 export const createPath = async (req, res) => {
-  const Fare = getModel("Pratima", "Fare");
-  const Path = getModel("Pratima", "Path");
   try {
     const { route_name, points } = req.body;
     const adminCompanyName = req.admin.company_name;
@@ -41,8 +41,6 @@ export const createPath = async (req, res) => {
 
 // Get All Paths
 export const getAllPaths = async (req, res) => {
-  const Fare = getModel("Pratima", "Fare");
-  const Path = getModel("Pratima", "Path");
   try {
     const paths = await Path.find({ company_name: req.admin.company_name });
     res.status(200).json(paths);
@@ -54,8 +52,6 @@ export const getAllPaths = async (req, res) => {
 
 // Get Path by ID
 export const getPathById = async (req, res) => {
-  const Fare = getModel("Pratima", "Fare");
-  const Path = getModel("Pratima", "Path");
   try {
     const path = await Path.findOne({
       _id: req.query.id,
@@ -73,8 +69,6 @@ export const getPathById = async (req, res) => {
 
 // Update Path by ID
 export const updatePathById = async (req, res) => {
-  const Fare = getModel("Pratima", "Fare");
-  const Path = getModel("Pratima", "Path");
   try {
     const { route_name, points } = req.body;
     const { id } = req.query;
@@ -104,8 +98,6 @@ export const updatePathById = async (req, res) => {
 
 // Delete Path
 export const deletePathById = async (req, res) => {
-  const Fare = getModel("Pratima", "Fare");
-  const Path = getModel("Pratima", "Path");
   try {
     const { id } = req.query;
     const path = await Path.findOneAndDelete({
@@ -127,8 +119,6 @@ export const deletePathById = async (req, res) => {
 /// for conductor
 
 export const getPointsListByPathId = async (req, res) => {
-  const Fare = getModel("Pratima", "Fare");
-  const Path = getModel("Pratima", "Path");
   try {
     const { path_id } = req.query;
 
@@ -161,8 +151,6 @@ export const getPointsListByPathId = async (req, res) => {
 };
 
 export const calculateFareByPathId = async (req, res) => {
-  const Fare = getModel("Pratima", "Fare");
-  const Path = getModel("Pratima", "Path");
   try {
     const { path_id, from, to, journey } = req.body;
     const company_name = req.conductor.company_name;

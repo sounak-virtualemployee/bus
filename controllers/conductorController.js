@@ -1,12 +1,11 @@
 import Conductor from "../models/Conductor.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
-import { getModel } from "../config/dbConnection.js";
+import Path from "../models/Path.js";
 
 export const createConductor = async (req, res) => {
   const admin = req.admin;
-  const Conductor = getModel("Pratima", "Conductor");
-  const Path = getModel("Pratima", "Path");
+
   console.log(admin.company_name);
   
   try {
@@ -84,8 +83,7 @@ export const createConductor = async (req, res) => {
 };
 
 export const getAllConductors = async (req, res) => {
-  const Conductor = getModel("Pratima", "Conductor");
-  const Path = getModel("Pratima", "Path");
+
   try {
     const adminCompanyName = req.admin.company_name;
 
@@ -108,8 +106,7 @@ export const getAllConductors = async (req, res) => {
 };
 
 export const getConductorById = async (req, res) => {
-  const Conductor = getModel("Pratima", "Conductor");
-  const Path = getModel("Pratima", "Path");
+
   try {
     const { id } = req.query;
     const adminCompanyName = req.admin.company_name;
@@ -140,8 +137,7 @@ export const getConductorById = async (req, res) => {
 };
 
 export const updateConductorById = async (req, res) => {
-  const Conductor = getModel("Pratima", "Conductor");
-  const Path = getModel("Pratima", "Path");
+  
   try {
     const { id } = req.query;
     const adminCompanyName = req.admin.company_name;
@@ -196,8 +192,7 @@ export const updateConductorById = async (req, res) => {
 };
 
 export const deleteConductorById = async (req, res) => {
-  const Conductor = getModel("Pratima", "Conductor");
-  const Path = getModel("Pratima", "Path");
+
   try {
     const { id } = req.query;
     const adminCompanyName = req.admin.company_name;
@@ -234,8 +229,7 @@ export const deleteConductorById = async (req, res) => {
 };
 
 export const loginConductor = async (req, res) => {
-  const Conductor = getModel("Pratima", "Conductor");
-  const Path = getModel("Pratima", "Path");
+  
   try {
     const { number } = req.query;
     const { password } = req.body;

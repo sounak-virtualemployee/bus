@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { getModel } from "../config/dbConnection.js";
+import Ticket from "../models/Ticket.js";
 
 export const generateTicket = async (req, res) => {
 
@@ -19,7 +19,7 @@ export const generateTicket = async (req, res) => {
       luggage,
     } = req.body;
 
-    const Ticket = getModel("Pratima", "Ticket");
+    
 
     const ticket = new Ticket({
       ticket_no,
@@ -55,7 +55,7 @@ export const getConductorMonthlySummary = async (req, res) => {
     const company_name = req.admin.company_name;
     console.log(company_name);
 
-    const Ticket = getModel(company_name, "Ticket");
+   
     if (!conductor_id) {
       return res.status(400).json({ message: "Conductor ID is required" });
     }
@@ -116,7 +116,6 @@ export const getMonthlyTicketSummary = async (req, res) => {
   try {
     const { conductor_id } = req.query;
     const company_name = req.conductor.company_name;
-    const Ticket = getModel(company_name, "Ticket");
 
     if (!conductor_id || !company_name) {
       return res
