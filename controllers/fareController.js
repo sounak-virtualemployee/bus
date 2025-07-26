@@ -1,5 +1,7 @@
-import Fare from '../models/Fare.js';
-import Path from '../models/Path.js';
+import { getModel } from "../config/dbConnection.js";
+
+const Fare = getModel("Pratima", "Fare");
+const Path = getModel("Pratima", "Path");
 
 export const createFare = async (req, res) => {
   try {
@@ -104,7 +106,6 @@ export const updateFareById = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
-
 
 export const deleteFareById = async (req, res) => {
   try {

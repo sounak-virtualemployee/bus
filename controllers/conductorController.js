@@ -1,12 +1,14 @@
 import Conductor from "../models/Conductor.js";
-import bcrypt from "bcryptjs";
-
 import jwt from "jsonwebtoken";
-import Path from "../models/Path.js";
 import mongoose from "mongoose";
+import { getModel } from "../config/dbConnection.js";
 
 export const createConductor = async (req, res) => {
   const admin = req.admin;
+  const Conductor = getModel("Pratima", "Conductor");
+  const Path = getModel("Pratima", "Path");
+  console.log(admin.company_name);
+  
   try {
     const {
       name,
@@ -15,10 +17,18 @@ export const createConductor = async (req, res) => {
       number,
       password,
       confirmpassword,
-      path_id
+      path_id,
     } = req.body;
 
-    if (!name || !busname || !busnumber || !number || !password || !confirmpassword || !path_id) {
+    if (
+      !name ||
+      !busname ||
+      !busnumber ||
+      !number ||
+      !password ||
+      !confirmpassword ||
+      !path_id
+    ) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -28,12 +38,16 @@ export const createConductor = async (req, res) => {
 
     const existing = await Conductor.findOne({ number });
     if (existing) {
-      return res.status(400).json({ message: "Conductor with this mobile number already exists" });
+      return res
+        .status(400)
+        .json({ message: "Conductor with this mobile number already exists" });
     }
 
     const path = await Path.findById(path_id);
     if (!path || path.company_name !== admin.company_name) {
-      return res.status(400).json({ message: "Invalid or unauthorized route selected" });
+      return res
+        .status(400)
+        .json({ message: "Invalid or unauthorized route selected" });
     }
 
     const conductor = new Conductor({
@@ -60,8 +74,8 @@ export const createConductor = async (req, res) => {
         path: conductor.path,
         company_name: conductor.company_name,
         logo: conductor.logo,
-        roles: conductor.roles
-      }
+        roles: conductor.roles,
+      },
     });
   } catch (err) {
     console.error(err);
@@ -70,19 +84,22 @@ export const createConductor = async (req, res) => {
 };
 
 export const getAllConductors = async (req, res) => {
+  const Conductor = getModel("Pratima", "Conductor");
+  const Path = getModel("Pratima", "Path");
   try {
     const adminCompanyName = req.admin.company_name;
 
-    const conductors = await Conductor.find({ company_name: adminCompanyName })
-      .populate({
-        path: 'path',
-        select: 'route_name'
-      });
+    const conductors = await Conductor.find({
+      company_name: adminCompanyName,
+    }).populate({
+      path: "path",
+      select: "route_name",
+    });
 
     res.status(200).json({
       message: "Conductors fetched successfully",
       total: conductors.length,
-      conductors
+      conductors,
     });
   } catch (error) {
     console.error(error);
@@ -90,8 +107,9 @@ export const getAllConductors = async (req, res) => {
   }
 };
 
-
 export const getConductorById = async (req, res) => {
+  const Conductor = getModel("Pratima", "Conductor");
+  const Path = getModel("Pratima", "Path");
   try {
     const { id } = req.query;
     const adminCompanyName = req.admin.company_name;
@@ -101,12 +119,14 @@ export const getConductorById = async (req, res) => {
       _id: id,
       company_name: adminCompanyName,
     }).populate({
-      path: 'path',
-      select: 'route_name '  // Fetch relevant route data
+      path: "path",
+      select: "route_name ", // Fetch relevant route data
     });
 
     if (!conductor) {
-      return res.status(404).json({ message: "Conductor not found or unauthorized" });
+      return res
+        .status(404)
+        .json({ message: "Conductor not found or unauthorized" });
     }
 
     res.status(200).json({
@@ -120,6 +140,8 @@ export const getConductorById = async (req, res) => {
 };
 
 export const updateConductorById = async (req, res) => {
+  const Conductor = getModel("Pratima", "Conductor");
+  const Path = getModel("Pratima", "Path");
   try {
     const { id } = req.query;
     const adminCompanyName = req.admin.company_name;
@@ -167,7 +189,6 @@ export const updateConductorById = async (req, res) => {
       message: "Conductor updated successfully",
       conductor,
     });
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
@@ -175,6 +196,8 @@ export const updateConductorById = async (req, res) => {
 };
 
 export const deleteConductorById = async (req, res) => {
+  const Conductor = getModel("Pratima", "Conductor");
+  const Path = getModel("Pratima", "Path");
   try {
     const { id } = req.query;
     const adminCompanyName = req.admin.company_name;
@@ -191,7 +214,9 @@ export const deleteConductorById = async (req, res) => {
     });
 
     if (!deletedConductor) {
-      return res.status(404).json({ message: "Conductor not found or unauthorized" });
+      return res
+        .status(404)
+        .json({ message: "Conductor not found or unauthorized" });
     }
 
     res.status(200).json({
@@ -199,10 +224,9 @@ export const deleteConductorById = async (req, res) => {
       conductor: {
         id: deletedConductor._id,
         name: deletedConductor.name,
-        number: deletedConductor.number
-      }
+        number: deletedConductor.number,
+      },
     });
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
@@ -210,6 +234,8 @@ export const deleteConductorById = async (req, res) => {
 };
 
 export const loginConductor = async (req, res) => {
+  const Conductor = getModel("Pratima", "Conductor");
+  const Path = getModel("Pratima", "Path");
   try {
     const { number } = req.query;
     const { password } = req.body;
