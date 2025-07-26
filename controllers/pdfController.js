@@ -2,7 +2,6 @@ import mongoose from "mongoose";
 import { getModel } from "../config/dbConnection.js";
 
 export const generateTicket = async (req, res) => {
-      const conductorCompanyName = req.conductor.company_name;
 
   try {
     const {
@@ -20,7 +19,7 @@ export const generateTicket = async (req, res) => {
       luggage,
     } = req.body;
 
-    const Ticket = getModel(conductorCompanyName, "Ticket");
+    const Ticket = getModel("Pratima", "Ticket");
 
     const ticket = new Ticket({
       ticket_no,

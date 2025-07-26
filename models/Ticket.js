@@ -22,6 +22,5 @@ const ticketSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
-const Ticket = mongoose.model('Ticket', ticketSchema);
 
 export default ticketSchema;
