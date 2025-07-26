@@ -43,4 +43,5 @@ const conductorSchema = new mongoose.Schema({
 
 const Conductor = mongoose.model("Conductor", conductorSchema);
 
-export default Conductor;
+export default conductorSchema;
+    

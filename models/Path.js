@@ -25,4 +25,4 @@ const pathSchema = new mongoose.Schema({
 });
 
 const Path = mongoose.model('Path', pathSchema);
-export default Path;
+export default pathSchema;
