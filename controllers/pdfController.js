@@ -19,6 +19,8 @@ export const generateTicket = async (req, res) => {
     } = req.body;
 
     const Ticket = getModel(company_name, "Ticket");
+    console.log("Sounak");
+console.log(company_name);
 
     const ticket = new Ticket({
       ticket_no,

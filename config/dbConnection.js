@@ -10,17 +10,17 @@ const connections = {};
  * StarReward, Central, Sense => StarReward DB
  * Qantum, MaxGaming, Manly, Montauk => Qantum DB
  */
-function getDBKey(appType) {
+function getDBKey(company_name) {
   const Pratima = ["Pratima"];
   const Trisojoyee = ["Trisojoyee"];
-  if (Pratima.includes(appType)) return "Pratima";
-  if (Trisojoyee.includes(appType)) return "Trisojoyee";
+  if (Pratima.includes(company_name)) return "Pratima";
+  if (Trisojoyee.includes(company_name)) return "Trisojoyee";
   // Default fallback
   return "Pratima";
 }
 
-function getConnection(appType) {
-  const dbKey = getDBKey(appType);
+function getConnection(company_name) {
+  const dbKey = getDBKey(company_name);
 
   if (!connections[dbKey]) {
     const uri = process.env[`${dbKey}_DB_URL`];
@@ -55,14 +55,14 @@ function getConnection(appType) {
 
 /**
  * Get mongoose model from appropriate connection by appType
- * @param {string} appType - The app type to decide DB connection
+ * @param {string} company_name - The app type to decide DB connection
  * @param {string} modelName - Name of the model
  */
-function getModel(appType, modelName) {
-  const conn = getConnection(appType);
+function getModel(company_name, modelName) {
+  const conn = getConnection(company_name);
   if (!conn.models[modelName]) {
     throw new Error(
-      `Model "${modelName}" is not registered on connection for DB key: "${getDBKey(appType)}"`
+      `Model "${modelName}" is not registered on connection for DB key: "${getDBKey(company_name)}"`
     );
   }
   return conn.model(modelName);
