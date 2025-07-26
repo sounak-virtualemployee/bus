@@ -4,7 +4,6 @@ const pathSchema = new mongoose.Schema({
   route_name: {
     type: String,
     required: true,
-    unique: true,
   },
   points: {
     type: [String],
