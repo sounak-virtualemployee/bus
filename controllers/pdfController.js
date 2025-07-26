@@ -55,10 +55,18 @@ export const getConductorMonthlySummary = async (req, res) => {
         },
       },
       {
+        $addFields: {
+          baseFare: { $multiply: ["$fare", "$count"] }
+        },
+      },
+      {
         $group: {
           _id: {
             $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
           },
+          totalBaseFare: { $sum: "$baseFare" },
+          totalDiscount: { $sum: "$discount" },
+          totalLuggage: { $sum: "$luggage" },
           totalIncome: { $sum: "$total" },
           totalTickets: { $sum: 1 },
         },
@@ -73,6 +81,9 @@ export const getConductorMonthlySummary = async (req, res) => {
       month: now.toLocaleString("default", { month: "long" }),
       dailySummary: dailySummary.map(entry => ({
         date: entry._id,
+        baseFare: entry.totalBaseFare,
+        discount: entry.totalDiscount,
+        luggage: entry.totalLuggage,
         totalIncome: entry.totalIncome,
         totalTickets: entry.totalTickets,
       }))
@@ -82,6 +93,7 @@ export const getConductorMonthlySummary = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 export const getMonthlyTicketSummary = async (req, res) => {
   try {
@@ -117,7 +129,6 @@ export const getMonthlyTicketSummary = async (req, res) => {
           totalLuggage: { $sum: "$luggage" },
           totalDiscount: { $sum: "$discount" },
           totalAmount: { $sum: "$total" },
-          tickets: { $push: "$$ROOT" }
         }
       },
       { $sort: { _id: 1 } }
