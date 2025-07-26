@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import { getModel } from "../config/dbConnection.js";
 import Path from "../models/Path.js";
 import Fare from "../models/Fare.js";
 
