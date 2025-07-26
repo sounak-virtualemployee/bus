@@ -3,7 +3,7 @@ import Ticket from '../models/Ticket.js';
 
 export const generateTicket = async (req, res) => {
   try {
-    const { company_name, ticket_no, bus_no, from, to, fare, count,total,conductor_id } = req.body;
+    const { company_name, ticket_no, bus_no, from, to, fare, count,total,conductor_id,mobile,discount,luggage } = req.body;
 
     const ticket = new Ticket({
       ticket_no,
@@ -11,8 +11,11 @@ export const generateTicket = async (req, res) => {
       bus_no,
       from,
       to,
+      mobile,
       count,
       fare,
+      discount,
+      luggage,
       total,
       conductor_id
     });
@@ -77,5 +80,53 @@ export const getConductorMonthlySummary = async (req, res) => {
   } catch (error) {
     console.error("Error fetching conductor monthly summary:", error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getMonthlyTicketSummary = async (req, res) => {
+  try {
+    const { conductor_id } = req.query;
+    const company_name = req.conductor.company_name ;
+
+    if (!conductor_id || !company_name) {
+      return res.status(400).json({ message: 'conductor_id and company_name are required' });
+    }
+
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+    const tickets = await Ticket.aggregate([
+      {
+        $match: {
+          conductor_id: new mongoose.Types.ObjectId(conductor_id),
+          company_name: company_name,
+          createdAt: { $gte: startOfMonth, $lte: endOfMonth }
+        }
+      },
+      {
+        $addFields: {
+          day: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          baseFare: { $multiply: ["$fare", "$count"] }
+        }
+      },
+      {
+        $group: {
+          _id: "$day",
+          totalBaseFare: { $sum: "$baseFare" },
+          totalLuggage: { $sum: "$luggage" },
+          totalDiscount: { $sum: "$discount" },
+          totalAmount: { $sum: "$total" },
+          tickets: { $push: "$$ROOT" }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    return res.json({ success: true, data: tickets });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Server error', error });
   }
 };
