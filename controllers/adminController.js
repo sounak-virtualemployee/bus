@@ -97,8 +97,11 @@ export const loginAdmin = async (req, res) => {
 
 
 export const getDashboardStats = async (req, res) => {
+    
+
   try {
     const company_name = req.admin.company_name; // from token (middleware)
+      const Ticket = getModel(company_name, "Ticket");
 console.log(company_name);
 
     // 1. Total Conductors
