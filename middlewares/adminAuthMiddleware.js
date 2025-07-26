@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
-import Admin from '../models/Admin.js';
-
+import { getModel } from '../config/dbConnection.js';
+const Admin = getModel("Pratima","Admin");
+const Conductor = getModel("Pratima","Conductor");
 
 export const protectAdmin = async (req, res, next) => {
   let token;

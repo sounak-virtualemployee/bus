@@ -65,6 +65,7 @@ function getModel(company_name, modelName) {
       `Model "${modelName}" is not registered on connection for DB key: "${getDBKey(company_name)}"`
     );
   }
+
   return conn.model(modelName);
 }
 
