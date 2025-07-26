@@ -9,14 +9,25 @@ export const generateTicket = async (req, res) => {
       bus_no,
       from,
       to,
-      fare,
-      count,
-      total,
+      fare = 0,
+      count = 1,
+      total = 0,
       conductor_id,
-      mobile,
-      discount,
-      luggage,
+      mobile = "",
+      discount = 0,
+      luggage = 0,
     } = req.body;
+
+    if (
+      !company_name ||
+      !ticket_no ||
+      !bus_no ||
+      !from ||
+      !to ||
+      !conductor_id
+    ) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
 
     const Ticket = getModel(company_name, "Ticket");
 
@@ -43,10 +54,11 @@ export const generateTicket = async (req, res) => {
       total_fare: total,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Ticket generation failed" });
+    console.error("[generateTicket] Error:", error);
+    res.status(500).json({ message: "Ticket generation failed", error: error.message });
   }
 };
+
 
 export const getConductorMonthlySummary = async (req, res) => {
   try {
