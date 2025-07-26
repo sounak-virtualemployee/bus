@@ -28,10 +28,7 @@ function getConnection(appType) {
       throw new Error(`[getConnection] Missing DB URL for key: ${dbKey}_DB_URL`);
     }
 
-    const conn = mongoose.createConnection(uri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    const conn = mongoose.createConnection(uri);
 
     // Register all models in the connection
     Object.entries(schemas).forEach(([modelName, schema]) => {

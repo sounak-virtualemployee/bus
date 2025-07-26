@@ -1,6 +1,5 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import Ticket from "../models/Ticket.js";
 import { getModel } from "../config/dbConnection.js";
 
 const Admin = getModel("Pratima","Admin");
@@ -98,11 +97,11 @@ export const loginAdmin = async (req, res) => {
 
 export const getDashboardStats = async (req, res) => {
     
-
   try {
     const company_name = req.admin.company_name; // from token (middleware)
       const Ticket = getModel(company_name, "Ticket");
-console.log(company_name);
+
+      console.log(company_name);
 
     // 1. Total Conductors
     const totalConductors = await Conductor.countDocuments({ company_name });
