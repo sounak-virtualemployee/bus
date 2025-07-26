@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 import { getModel } from "../config/dbConnection.js";
 
 export const generateTicket = async (req, res) => {
+      const conductorCompanyName = req.conductor.company_name;
+
   try {
     const {
       company_name,
@@ -9,27 +11,16 @@ export const generateTicket = async (req, res) => {
       bus_no,
       from,
       to,
-      fare = 0,
-      count = 1,
-      total = 0,
+      fare,
+      count,
+      total,
       conductor_id,
-      mobile = "",
-      discount = 0,
-      luggage = 0,
+      mobile,
+      discount,
+      luggage,
     } = req.body;
 
-    if (
-      !company_name ||
-      !ticket_no ||
-      !bus_no ||
-      !from ||
-      !to ||
-      !conductor_id
-    ) {
-      return res.status(400).json({ message: "Missing required fields" });
-    }
-
-    const Ticket = getModel(company_name, "Ticket");
+    const Ticket = getModel(conductorCompanyName, "Ticket");
 
     const ticket = new Ticket({
       ticket_no,
@@ -54,11 +45,10 @@ export const generateTicket = async (req, res) => {
       total_fare: total,
     });
   } catch (error) {
-    console.error("[generateTicket] Error:", error);
-    res.status(500).json({ message: "Ticket generation failed", error: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Ticket generation failed" });
   }
 };
-
 
 export const getConductorMonthlySummary = async (req, res) => {
   try {
