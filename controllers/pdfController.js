@@ -18,6 +18,8 @@ export const generateTicket = async (req, res) => {
       discount,
       luggage,
     } = req.body;
+    console.log("sounak")
+console.log(req.body);
 
     
 
@@ -35,8 +37,6 @@ export const generateTicket = async (req, res) => {
       total,
       conductor_id,
     });
-    console.log("sounak")
-console.log(req.body);
 
     await ticket.save();
 
