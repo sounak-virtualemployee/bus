@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import Conductor from '../models/Conductor.js';
 
 
 export const protectConductor = async (req, res, next) => {
