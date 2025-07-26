@@ -35,6 +35,7 @@ export const generateTicket = async (req, res) => {
       total,
       conductor_id,
     });
+console.log(conductor_id);
 
     await ticket.save();
 
