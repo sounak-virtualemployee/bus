@@ -1,8 +1,7 @@
 import mongoose from "mongoose";
-import Ticket from "../models/Ticket.js";
+import { getModel } from "../config/dbConnection.js";
 
 export const generateTicket = async (req, res) => {
-
   try {
     const {
       company_name,
@@ -18,10 +17,8 @@ export const generateTicket = async (req, res) => {
       discount,
       luggage,
     } = req.body;
-    console.log("sounak")
-console.log(req.body);
 
-    
+    const Ticket = getModel(company_name, "Ticket");
 
     const ticket = new Ticket({
       ticket_no,
@@ -57,7 +54,7 @@ export const getConductorMonthlySummary = async (req, res) => {
     const company_name = req.admin.company_name;
     console.log(company_name);
 
-   
+    const Ticket = getModel(company_name, "Ticket");
     if (!conductor_id) {
       return res.status(400).json({ message: "Conductor ID is required" });
     }
@@ -118,7 +115,7 @@ export const getMonthlyTicketSummary = async (req, res) => {
   try {
     const { conductor_id } = req.query;
     const company_name = req.conductor.company_name;
-
+    const Ticket = getModel(company_name, "Ticket");
     if (!conductor_id || !company_name) {
       return res
         .status(400)
@@ -153,24 +150,14 @@ export const getMonthlyTicketSummary = async (req, res) => {
       },
       {
         $group: {
-          _id: "$day", // grouping key must be `_id`
+          date: "$day",
           totalBaseFare: { $sum: "$baseFare" },
           totalLuggage: { $sum: "$luggage" },
           totalDiscount: { $sum: "$discount" },
           totalAmount: { $sum: "$total" },
         },
       },
-      {
-        $project: {
-          date: "$_id", // rename `_id` to `date`
-          _id: 0,
-          totalBaseFare: 1,
-          totalLuggage: 1,
-          totalDiscount: 1,
-          totalAmount: 1,
-        },
-      },
-      { $sort: { date: -1 } },
+      { $sort: { date: 1 } },
     ]);
 
     return res.json({ success: true, data: tickets });
@@ -179,4 +166,3 @@ export const getMonthlyTicketSummary = async (req, res) => {
     return res.status(500).json({ message: "Server error", error });
   }
 };
-

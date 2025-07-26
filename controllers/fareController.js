@@ -1,7 +1,7 @@
-import Fare from "../models/Fare.js";
-import Path from "../models/Path.js";
+import { getModel } from "../config/dbConnection.js";
 
-
+const Fare = getModel("Pratima", "Fare");
+const Path = getModel("Pratima", "Path");
 
 export const createFare = async (req, res) => {
   try {

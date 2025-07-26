@@ -1,8 +1,9 @@
-import Admin from "../models/Admin.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import Conductor from "../models/Conductor.js";
-import Ticket from "../models/Ticket.js";
+import { getModel } from "../config/dbConnection.js";
+
+const Admin = getModel("Pratima", "Admin");
+const Conductor = getModel("Pratima", "Conductor");
 
 export const createAdmin = async (req, res) => {
   try {
@@ -48,10 +49,10 @@ export const createAdmin = async (req, res) => {
 };
 
 export const loginAdmin = async (req, res) => {
-  const {number}=req.query;
-  
+  const { number } = req.query;
+
   try {
-    const {  password } = req.body;
+    const { password } = req.body;
 
     // Check if admin exists
     const admin = await Admin.findOne({ number });
@@ -92,13 +93,11 @@ export const loginAdmin = async (req, res) => {
   }
 };
 
-
-
 export const getDashboardStats = async (req, res) => {
   try {
     const company_name = req.admin.company_name; // from token (middleware)
-console.log(company_name);
-
+    console.log(company_name);
+    const Ticket = getModel(company_name, "Ticket");
     // 1. Total Conductors
     const totalConductors = await Conductor.countDocuments({ company_name });
 

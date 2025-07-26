@@ -1,11 +1,12 @@
-import Conductor from "../models/Conductor.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
-import Path from "../models/Path.js";
+import { getModel } from "../config/dbConnection.js";
+
 
 export const createConductor = async (req, res) => {
   const admin = req.admin;
-
+  const Conductor = getModel("Pratima", "Conductor");
+  const Path = getModel("Pratima", "Path");
   console.log(admin.company_name);
   
   try {
@@ -83,6 +84,7 @@ export const createConductor = async (req, res) => {
 };
 
 export const getAllConductors = async (req, res) => {
+  const Conductor = getModel("Pratima", "Conductor");
 
   try {
     const adminCompanyName = req.admin.company_name;
@@ -106,10 +108,10 @@ export const getAllConductors = async (req, res) => {
 };
 
 export const getConductorById = async (req, res) => {
-
   try {
     const { id } = req.query;
     const adminCompanyName = req.admin.company_name;
+   const Conductor = getModel("Pratima", "Conductor");
 
     // Find conductor by ID and match company, and populate the route
     const conductor = await Conductor.findOne({
@@ -137,10 +139,10 @@ export const getConductorById = async (req, res) => {
 };
 
 export const updateConductorById = async (req, res) => {
-  
   try {
     const { id } = req.query;
     const adminCompanyName = req.admin.company_name;
+const Conductor = getModel("Pratima", "Conductor");
 
     // Find conductor by ID and company
     const conductor = await Conductor.findOne({
@@ -192,10 +194,10 @@ export const updateConductorById = async (req, res) => {
 };
 
 export const deleteConductorById = async (req, res) => {
-
   try {
     const { id } = req.query;
     const adminCompanyName = req.admin.company_name;
+    const Conductor = getModel("Pratima", "Conductor");
 
     // Optional: Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -229,10 +231,10 @@ export const deleteConductorById = async (req, res) => {
 };
 
 export const loginConductor = async (req, res) => {
-  
   try {
     const { number } = req.query;
     const { password } = req.body;
+    const Conductor = getModel("Pratima", "Conductor");
 
     if (!number || !password) {
       return res

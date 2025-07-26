@@ -1,7 +1,9 @@
-import Admin from "../models/Admin.js";
-import Conductor from "../models/Conductor.js";
+import { getModel } from "../config/dbConnection.js";
+// import Admin from "../models/Admin.js";
+// import Conductor from "../models/Conductor.js";
 
-
+const Admin = getModel("Pratima","Admin");
+const Conductor = getModel("Pratima","Conductor");
 
 export const checkNumber = async (req, res) => {
   try {
