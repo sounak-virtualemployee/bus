@@ -41,12 +41,34 @@ export const getAllFares = async (req, res) => {
   try {
     const adminCompanyName = req.admin.company_name;
 
-    const fares = await Fare.find({ company_name: adminCompanyName });
+    // Get all fares for the company
+    const fares = await Fare.find({ company_name: adminCompanyName }).lean();
+
+    // Extract all path IDs from fares
+    const pathIds = fares.map(f => f.path);
+
+    // Get path details in one query
+    const paths = await Path.find({ _id: { $in: pathIds } }).lean();
+
+    // Convert paths array to a map for quick lookup
+    const pathMap = {};
+    paths.forEach(p => {
+      pathMap[p._id.toString()] = p;
+    });
+
+    // Attach path details to each fare
+    const enrichedFares = fares.map(fare => {
+      return {
+        ...fare,
+        path_details: pathMap[fare.path?.toString()] || null
+      };
+    });
 
     res.status(200).json({
       message: 'Fare list fetched successfully',
-      fares
+      fares: enrichedFares
     });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
