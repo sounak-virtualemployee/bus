@@ -253,21 +253,67 @@ export const getMonthlyTicketSummary = async (req, res) => {
         },
       },
       {
-        $group: {
-          _id: "$trip",
-          ticket_count: { $sum: "$count" },
-          base_fare: { $sum: "$base_fare" },
-          total_discount: { $sum: "$discount" },
-          total_income: { $sum: "$total" },
-          total_luggage: { $sum: "$luggage" },
-        },
+        $facet: {
+          tripData: [
+            {
+              $group: {
+                _id: "$trip",
+                ticket_count: { $sum: "$count" },
+                base_fare: { $sum: "$base_fare" },
+                total_discount: { $sum: "$discount" },
+                total_income: { $sum: "$total" },
+                total_luggage: { $sum: "$luggage" }
+              },
+            },
+            { $sort: { _id: 1 } }
+          ],
+          routeData: [
+            {
+              $group: {
+                _id: { trip: "$trip", from: "$from", to: "$to" },
+                count: { $sum: "$count" }
+              },
+            },
+            {
+              $group: {
+                _id: "$_id.trip",
+                routes: {
+                  $push: {
+                    from: "$_id.from",
+                    to: "$_id.to",
+                    count: "$count"
+                  }
+                }
+              }
+            }
+          ]
+        }
       },
       {
-        $sort: { _id: 1 },
-      },
+        $project: {
+          tripData: 1,
+          routeData: 1
+        }
+      }
     ]);
 
-    const totals = tripSummary.reduce(
+    const trips = tripSummary[0].tripData;
+    const routes = tripSummary[0].routeData;
+
+    const merged = trips.map(trip => {
+      const routeMatch = routes.find(r => r._id === trip._id);
+      return {
+        trip: trip._id,
+        ticket_count: trip.ticket_count,
+        base_fare: trip.base_fare,
+        total_discount: trip.total_discount,
+        total_income: trip.total_income,
+        total_luggage: trip.total_luggage,
+        routes: routeMatch ? routeMatch.routes : []
+      };
+    });
+
+    const totals = merged.reduce(
       (acc, trip) => {
         acc.ticket_count += trip.ticket_count;
         acc.base_fare += trip.base_fare;
@@ -282,14 +328,7 @@ export const getMonthlyTicketSummary = async (req, res) => {
     res.status(200).json({
       message: "Trip-wise summary fetched successfully",
       date: targetDate.toISOString().split("T")[0],
-      tripSummary: tripSummary.map((trip) => ({
-        trip: trip._id,
-        ticket_count: trip.ticket_count,
-        base_fare: trip.base_fare,
-        total_discount: trip.total_discount,
-        total_income: trip.total_income,
-        total_luggage: trip.total_luggage,
-      })),
+      tripSummary: merged,
       total: totals
     });
   } catch (error) {
