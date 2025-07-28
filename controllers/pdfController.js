@@ -15,12 +15,13 @@ export const generateTicket = async (req, res) => {
       conductor_id,
       mobile,
       discount,
+      trip,
       luggage,
     } = req.body;
 
     const Ticket = getModel(company_name, "Ticket");
     console.log("Sounak");
-console.log(company_name);
+console.log(req.body);
 
     const ticket = new Ticket({
       ticket_no,
@@ -32,6 +33,7 @@ console.log(company_name);
       count,
       fare,
       discount,
+      trip,
       luggage,
       total,
       conductor_id,
@@ -54,9 +56,8 @@ export const getConductorMonthlySummary = async (req, res) => {
   try {
     const { conductor_id } = req.query;
     const company_name = req.admin.company_name;
-    console.log(company_name);
-
     const Ticket = getModel(company_name, "Ticket");
+
     if (!conductor_id) {
       return res.status(400).json({ message: "Conductor ID is required" });
     }
@@ -76,6 +77,9 @@ export const getConductorMonthlySummary = async (req, res) => {
       {
         $addFields: {
           baseFare: { $multiply: ["$fare", "$count"] },
+          recalculatedDiscount: {
+            $subtract: [{ $multiply: ["$fare", "$count"] }, "$total"],
+          },
         },
       },
       {
@@ -84,7 +88,7 @@ export const getConductorMonthlySummary = async (req, res) => {
             $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
           },
           totalBaseFare: { $sum: "$baseFare" },
-          totalDiscount: { $sum: "$discount" },
+          totalDiscount: { $sum: "$recalculatedDiscount" },
           totalLuggage: { $sum: "$luggage" },
           totalIncome: { $sum: "$total" },
           totalTickets: { $sum: 1 },
@@ -113,58 +117,297 @@ export const getConductorMonthlySummary = async (req, res) => {
   }
 };
 
+// export const getMonthlyTicketSummary = async (req, res) => {
+//   try {
+//     const { conductor_id } = req.query;
+//     const company_name = req.conductor.company_name;
+//     const Ticket = getModel(company_name, "Ticket");
+
+//     if (!conductor_id || !company_name) {
+//       return res
+//         .status(400)
+//         .json({ message: "conductor_id and company_name are required" });
+//     }
+
+//     const now = new Date();
+//     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+//     const endOfMonth = new Date(
+//       now.getFullYear(),
+//       now.getMonth() + 1,
+//       0,
+//       23,
+//       59,
+//       59,
+//       999
+//     );
+
+//     const data = await Ticket.aggregate([
+//       {
+//         $match: {
+//           conductor_id: new mongoose.Types.ObjectId(conductor_id),
+//           company_name,
+//           createdAt: { $gte: startOfMonth, $lte: endOfMonth },
+//         },
+//       },
+//       {
+//         $addFields: {
+//           day: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+//           baseFare: { $multiply: ["$fare", "$count"] },
+//         },
+//       },
+//       {
+//         $group: {
+//           _id: {
+//             date: "$day",
+//             trip: "$trip"
+//           },
+//           ticket_count: { $sum: "$count" },
+//           base_fare: { $sum: "$baseFare" },
+//           total_discount: { $sum: "$discount" },
+//           total_income: { $sum: "$total" },
+//           total_luggage: { $sum: "$luggage" },
+//         },
+//       },
+//       {
+//         $sort: { "_id.date": 1, "_id.trip": 1 }
+//       }
+//     ]);
+
+//     // Restructure data: group by date, then by trip
+//     const groupedByDate = {};
+//     const total = {
+//       ticket_count: 0,
+//       base_fare: 0,
+//       total_discount: 0,
+//       total_income: 0,
+//       total_luggage: 0
+//     };
+
+//     data.forEach(item => {
+//       const { date, trip } = item._id;
+
+//       // Accumulate overall total
+//       total.ticket_count += item.ticket_count;
+//       total.base_fare += item.base_fare;
+//       total.total_discount += item.total_discount;
+//       total.total_income += item.total_income;
+//       total.total_luggage += item.total_luggage;
+
+//       if (!groupedByDate[date]) {
+//         groupedByDate[date] = [];
+//       }
+
+//       groupedByDate[date].push({
+//         trip,
+//         ticket_count: item.ticket_count,
+//         base_fare: item.base_fare,
+//         total_discount: item.total_discount,
+//         total_income: item.total_income,
+//         total_luggage: item.total_luggage
+//       });
+//     });
+
+//     const dailySummary = Object.keys(groupedByDate).map(date => ({
+//       date,
+//       trips: groupedByDate[date]
+//     }));
+
+//     return res.json({
+//       success: true,
+//       message: "Monthly ticket summary by day and trip fetched successfully",
+//       month: now.toLocaleString("default", { month: "long" }),
+//       dailySummary,
+//       total
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ message: "Server error", error });
+//   }
+// };
+
 export const getMonthlyTicketSummary = async (req, res) => {
   try {
-    const { conductor_id } = req.query;
+    const { conductor_id, date } = req.query;
     const company_name = req.conductor.company_name;
     const Ticket = getModel(company_name, "Ticket");
-    if (!conductor_id || !company_name) {
-      return res
-        .status(400)
-        .json({ message: "conductor_id and company_name are required" });
+
+    if (!conductor_id || !date) {
+      return res.status(400).json({ message: "Conductor ID and date are required" });
     }
 
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(
-      now.getFullYear(),
-      now.getMonth() + 1,
-      0,
-      23,
-      59,
-      59,
-      999
-    );
+    const targetDate = new Date(date);
+    const nextDate = new Date(targetDate);
+    nextDate.setDate(targetDate.getDate() + 1);
 
-    const tickets = await Ticket.aggregate([
+    const tripSummary = await Ticket.aggregate([
       {
         $match: {
+          company_name,
           conductor_id: new mongoose.Types.ObjectId(conductor_id),
-          company_name: company_name,
-          createdAt: { $gte: startOfMonth, $lte: endOfMonth },
+          createdAt: { $gte: targetDate, $lt: nextDate },
         },
       },
       {
         $addFields: {
-          day: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-          baseFare: { $multiply: ["$fare", "$count"] },
+          base_fare: { $multiply: ["$fare", "$count"] }
         },
       },
       {
         $group: {
-          date: "$day",
-          totalBaseFare: { $sum: "$baseFare" },
-          totalLuggage: { $sum: "$luggage" },
-          totalDiscount: { $sum: "$discount" },
-          totalAmount: { $sum: "$total" },
+          _id: "$trip",
+          ticket_count: { $sum: "$count" },
+          base_fare: { $sum: "$base_fare" },
+          total_discount: { $sum: "$discount" },
+          total_income: { $sum: "$total" },
+          total_luggage: { $sum: "$luggage" },
         },
       },
-      { $sort: { date: 1 } },
+      {
+        $sort: { _id: 1 },
+      },
     ]);
 
-    return res.json({ success: true, data: tickets });
+    const totals = tripSummary.reduce(
+      (acc, trip) => {
+        acc.ticket_count += trip.ticket_count;
+        acc.base_fare += trip.base_fare;
+        acc.total_discount += trip.total_discount;
+        acc.total_income += trip.total_income;
+        acc.total_luggage += trip.total_luggage;
+        return acc;
+      },
+      { ticket_count: 0, base_fare: 0, total_discount: 0, total_income: 0, total_luggage: 0 }
+    );
+
+    res.status(200).json({
+      message: "Trip-wise summary fetched successfully",
+      date: targetDate.toISOString().split("T")[0],
+      tripSummary: tripSummary.map((trip) => ({
+        trip: trip._id,
+        ticket_count: trip.ticket_count,
+        base_fare: trip.base_fare,
+        total_discount: trip.total_discount,
+        total_income: trip.total_income,
+        total_luggage: trip.total_luggage,
+      })),
+      total: totals
+    });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Server error", error });
+    console.error("Error fetching trip summary:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
+
+export const getConductorTripSummaryByDate = async (req, res) => {
+  try {
+    const { conductor_id, date } = req.query;
+    const company_name = req.admin.company_name;
+    const Ticket = getModel(company_name, "Ticket");
+
+    if (!conductor_id || !date) {
+      return res.status(400).json({ message: "Conductor ID and date are required" });
+    }
+
+    const targetDate = new Date(date);
+    const nextDate = new Date(targetDate);
+    nextDate.setDate(targetDate.getDate() + 1);
+
+    const tripSummary = await Ticket.aggregate([
+      {
+        $match: {
+          company_name,
+          conductor_id: new mongoose.Types.ObjectId(conductor_id),
+          createdAt: { $gte: targetDate, $lt: nextDate },
+        },
+      },
+      {
+        $addFields: {
+          base_fare: { $multiply: ["$fare", "$count"] }
+        },
+      },
+      {
+        $facet: {
+          tripData: [
+            {
+              $group: {
+                _id: "$trip",
+                ticket_count: { $sum: "$count" },
+                base_fare: { $sum: "$base_fare" },
+                total_discount: { $sum: "$discount" },
+                total_income: { $sum: "$total" },
+                total_luggage: { $sum: "$luggage" }
+              },
+            },
+            { $sort: { _id: 1 } }
+          ],
+          routeData: [
+            {
+              $group: {
+                _id: { trip: "$trip", from: "$from", to: "$to" },
+                count: { $sum: "$count" }
+              },
+            },
+            {
+              $group: {
+                _id: "$_id.trip",
+                routes: {
+                  $push: {
+                    from: "$_id.from",
+                    to: "$_id.to",
+                    count: "$count"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        $project: {
+          tripData: 1,
+          routeData: 1
+        }
+      }
+    ]);
+
+    const trips = tripSummary[0].tripData;
+    const routes = tripSummary[0].routeData;
+
+    const merged = trips.map(trip => {
+      const routeMatch = routes.find(r => r._id === trip._id);
+      return {
+        trip: trip._id,
+        ticket_count: trip.ticket_count,
+        base_fare: trip.base_fare,
+        total_discount: trip.total_discount,
+        total_income: trip.total_income,
+        total_luggage: trip.total_luggage,
+        routes: routeMatch ? routeMatch.routes : []
+      };
+    });
+
+    const totals = merged.reduce(
+      (acc, trip) => {
+        acc.ticket_count += trip.ticket_count;
+        acc.base_fare += trip.base_fare;
+        acc.total_discount += trip.total_discount;
+        acc.total_income += trip.total_income;
+        acc.total_luggage += trip.total_luggage;
+        return acc;
+      },
+      { ticket_count: 0, base_fare: 0, total_discount: 0, total_income: 0, total_luggage: 0 }
+    );
+
+    res.status(200).json({
+      message: "Trip-wise summary fetched successfully",
+      date: targetDate.toISOString().split("T")[0],
+      tripSummary: merged,
+      total: totals
+    });
+  } catch (error) {
+    console.error("Error fetching trip summary:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+

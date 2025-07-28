@@ -11,6 +11,7 @@ const ticketSchema = new mongoose.Schema({
   discount:Number,
   mobile:Number,
   luggage:Number,
+  trip:String,
   total: Number,
   conductor_id: {
     type: mongoose.Schema.Types.ObjectId,
