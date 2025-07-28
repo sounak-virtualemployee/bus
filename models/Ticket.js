@@ -19,10 +19,17 @@ const ticketSchema = new mongoose.Schema({
     required: true,
   },
   createdAt: {
-    type: Date,
-    default: Date.now,
+  type: Date,
+  default: () => {
+    const now = new Date();
+    // Convert to IST (UTC+5:30)
+    now.setMinutes(now.getMinutes() + 330);
+    return now;
   },
+},
+
 });
 const Ticket = mongoose.model('Ticket', ticketSchema);
 
 export default ticketSchema;
+ 
