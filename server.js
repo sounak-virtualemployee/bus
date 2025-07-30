@@ -11,6 +11,7 @@ import authRoutes from "./routes/authRoutes.js";
 import fareRoutes from "./routes/fareRoutes.js";
 import pdfRoutes from "./routes/pdfRoutes.js";
 import pathRoutes from "./routes/pathRoutes.js";
+import csvRoutes from "./routes/csvRoutes.js";
 
 
 dotenv.config();
@@ -32,8 +33,8 @@ app.use("/api/conductor", conductorRoutes);
 app.use("/api/auth",authRoutes)
 app.use("/api/fare",fareRoutes)
 app.use("/api/path",pathRoutes)
-
-app.use('/uploads', express.static('uploads'));
+app.use("/api/csv",csvRoutes)
+app.use('/public', express.static('public'));
 
 app.use("/api/pdf",pdfRoutes)
 

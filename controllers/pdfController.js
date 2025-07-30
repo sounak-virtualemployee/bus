@@ -366,6 +366,7 @@ export const getConductorTripSummaryByDate = async (req, res) => {
       },
       {
         $facet: {
+          // 1. Trip-wise summary
           tripData: [
             {
               $group: {
@@ -375,16 +376,19 @@ export const getConductorTripSummaryByDate = async (req, res) => {
                 total_discount: { $sum: "$discount" },
                 total_income: { $sum: "$total" },
                 total_luggage: { $sum: "$luggage" }
-              },
+              }
             },
             { $sort: { _id: 1 } }
           ],
+
+          // 2. Routes per trip (with count + total)
           routeData: [
             {
               $group: {
                 _id: { trip: "$trip", from: "$from", to: "$to" },
-                count: { $sum: "$count" }
-              },
+                count: { $sum: "$count" },
+                total: { $sum: "$total" }
+              }
             },
             {
               $group: {
@@ -393,7 +397,8 @@ export const getConductorTripSummaryByDate = async (req, res) => {
                   $push: {
                     from: "$_id.from",
                     to: "$_id.to",
-                    count: "$count"
+                    count: "$count",
+                    total: "$total"
                   }
                 }
               }
@@ -448,5 +453,3 @@ export const getConductorTripSummaryByDate = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
-
