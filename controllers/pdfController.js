@@ -356,7 +356,10 @@ export const getConductorTripSummaryByDate = async (req, res) => {
         .status(400)
         .json({ message: "Conductor ID and date are required" });
     }
-const conductor = await Conductor.findOne({ _id: conductor_id }).select("name");
+    const conductor = await Conductor.findOne({ _id: conductor_id }).select(
+      "name"
+    );
+
     const targetDate = new Date(date);
     const nextDate = new Date(targetDate);
     nextDate.setDate(targetDate.getDate() + 1);
@@ -381,7 +384,7 @@ const conductor = await Conductor.findOne({ _id: conductor_id }).select("name");
             {
               $group: {
                 _id: "$trip",
-               conductorName:conductor,
+                conductorName: conductor,
                 ticket_count: { $sum: "$count" },
                 base_fare: { $sum: "$base_fare" },
                 total_discount: { $sum: "$discount" },
