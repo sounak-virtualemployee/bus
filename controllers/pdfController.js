@@ -350,7 +350,7 @@ export const getConductorTripSummaryByDate = async (req, res) => {
     const { conductor_id, date } = req.query;
     const company_name = req.admin.company_name;
     const Ticket = getModel(company_name, "Ticket");
-    const Conductor = getModel(company_name, "Conductor");
+    const Conductor = getModel("Pratima", "Conductor");
     if (!conductor_id || !date) {
       return res
         .status(400)
