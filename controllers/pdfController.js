@@ -384,7 +384,7 @@ export const getConductorTripSummaryByDate = async (req, res) => {
             {
               $group: {
                 _id: "$trip",
-                conductorName: conductor,
+
                 ticket_count: { $sum: "$count" },
                 base_fare: { $sum: "$base_fare" },
                 total_discount: { $sum: "$discount" },
@@ -465,6 +465,7 @@ export const getConductorTripSummaryByDate = async (req, res) => {
     res.status(200).json({
       message: "Trip-wise summary fetched successfully",
       date: targetDate.toISOString().split("T")[0],
+      conductor_name: conductor?.name || "",
       tripSummary: merged,
       total: totals,
     });
