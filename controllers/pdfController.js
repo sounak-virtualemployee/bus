@@ -21,7 +21,7 @@ export const generateTicket = async (req, res) => {
 
     const Ticket = getModel(company_name, "Ticket");
     console.log("Sounak");
-console.log(req.body);
+    console.log(req.body);
 
     const ticket = new Ticket({
       ticket_no,
@@ -232,7 +232,9 @@ export const getMonthlyTicketSummary = async (req, res) => {
     const Ticket = getModel(company_name, "Ticket");
 
     if (!conductor_id || !date) {
-      return res.status(400).json({ message: "Conductor ID and date are required" });
+      return res
+        .status(400)
+        .json({ message: "Conductor ID and date are required" });
     }
 
     const targetDate = new Date(date);
@@ -249,7 +251,7 @@ export const getMonthlyTicketSummary = async (req, res) => {
       },
       {
         $addFields: {
-          base_fare: { $multiply: ["$fare", "$count"] }
+          base_fare: { $multiply: ["$fare", "$count"] },
         },
       },
       {
@@ -262,16 +264,16 @@ export const getMonthlyTicketSummary = async (req, res) => {
                 base_fare: { $sum: "$base_fare" },
                 total_discount: { $sum: "$discount" },
                 total_income: { $sum: "$total" },
-                total_luggage: { $sum: "$luggage" }
+                total_luggage: { $sum: "$luggage" },
               },
             },
-            { $sort: { _id: 1 } }
+            { $sort: { _id: 1 } },
           ],
           routeData: [
             {
               $group: {
                 _id: { trip: "$trip", from: "$from", to: "$to" },
-                count: { $sum: "$count" }
+                count: { $sum: "$count" },
               },
             },
             {
@@ -281,27 +283,27 @@ export const getMonthlyTicketSummary = async (req, res) => {
                   $push: {
                     from: "$_id.from",
                     to: "$_id.to",
-                    count: "$count"
-                  }
-                }
-              }
-            }
-          ]
-        }
+                    count: "$count",
+                  },
+                },
+              },
+            },
+          ],
+        },
       },
       {
         $project: {
           tripData: 1,
-          routeData: 1
-        }
-      }
+          routeData: 1,
+        },
+      },
     ]);
 
     const trips = tripSummary[0].tripData;
     const routes = tripSummary[0].routeData;
 
-    const merged = trips.map(trip => {
-      const routeMatch = routes.find(r => r._id === trip._id);
+    const merged = trips.map((trip) => {
+      const routeMatch = routes.find((r) => r._id === trip._id);
       return {
         trip: trip._id,
         ticket_count: trip.ticket_count,
@@ -309,7 +311,7 @@ export const getMonthlyTicketSummary = async (req, res) => {
         total_discount: trip.total_discount,
         total_income: trip.total_income,
         total_luggage: trip.total_luggage,
-        routes: routeMatch ? routeMatch.routes : []
+        routes: routeMatch ? routeMatch.routes : [],
       };
     });
 
@@ -322,14 +324,20 @@ export const getMonthlyTicketSummary = async (req, res) => {
         acc.total_luggage += trip.total_luggage;
         return acc;
       },
-      { ticket_count: 0, base_fare: 0, total_discount: 0, total_income: 0, total_luggage: 0 }
+      {
+        ticket_count: 0,
+        base_fare: 0,
+        total_discount: 0,
+        total_income: 0,
+        total_luggage: 0,
+      }
     );
 
     res.status(200).json({
       message: "Trip-wise summary fetched successfully",
       date: targetDate.toISOString().split("T")[0],
       tripSummary: merged,
-      total: totals
+      total: totals,
     });
   } catch (error) {
     console.error("Error fetching trip summary:", error);
@@ -342,10 +350,13 @@ export const getConductorTripSummaryByDate = async (req, res) => {
     const { conductor_id, date } = req.query;
     const company_name = req.admin.company_name;
     const Ticket = getModel(company_name, "Ticket");
-
+    const Conductor = getModel(company_name, "Conductor");
     if (!conductor_id || !date) {
-      return res.status(400).json({ message: "Conductor ID and date are required" });
+      return res
+        .status(400)
+        .json({ message: "Conductor ID and date are required" });
     }
+const conductor = await Conductor.findOne({ _id: conductor_id }).select("name");
 
     const targetDate = new Date(date);
     const nextDate = new Date(targetDate);
@@ -361,7 +372,7 @@ export const getConductorTripSummaryByDate = async (req, res) => {
       },
       {
         $addFields: {
-          base_fare: { $multiply: ["$fare", "$count"] }
+          base_fare: { $multiply: ["$fare", "$count"] },
         },
       },
       {
@@ -371,14 +382,15 @@ export const getConductorTripSummaryByDate = async (req, res) => {
             {
               $group: {
                 _id: "$trip",
+               conductorName:conductor,
                 ticket_count: { $sum: "$count" },
                 base_fare: { $sum: "$base_fare" },
                 total_discount: { $sum: "$discount" },
                 total_income: { $sum: "$total" },
-                total_luggage: { $sum: "$luggage" }
-              }
+                total_luggage: { $sum: "$luggage" },
+              },
             },
-            { $sort: { _id: 1 } }
+            { $sort: { _id: 1 } },
           ],
 
           // 2. Routes per trip (with count + total)
@@ -387,8 +399,8 @@ export const getConductorTripSummaryByDate = async (req, res) => {
               $group: {
                 _id: { trip: "$trip", from: "$from", to: "$to" },
                 count: { $sum: "$count" },
-                total: { $sum: "$total" }
-              }
+                total: { $sum: "$total" },
+              },
             },
             {
               $group: {
@@ -398,27 +410,27 @@ export const getConductorTripSummaryByDate = async (req, res) => {
                     from: "$_id.from",
                     to: "$_id.to",
                     count: "$count",
-                    total: "$total"
-                  }
-                }
-              }
-            }
-          ]
-        }
+                    total: "$total",
+                  },
+                },
+              },
+            },
+          ],
+        },
       },
       {
         $project: {
           tripData: 1,
-          routeData: 1
-        }
-      }
+          routeData: 1,
+        },
+      },
     ]);
 
     const trips = tripSummary[0].tripData;
     const routes = tripSummary[0].routeData;
 
-    const merged = trips.map(trip => {
-      const routeMatch = routes.find(r => r._id === trip._id);
+    const merged = trips.map((trip) => {
+      const routeMatch = routes.find((r) => r._id === trip._id);
       return {
         trip: trip._id,
         ticket_count: trip.ticket_count,
@@ -426,7 +438,7 @@ export const getConductorTripSummaryByDate = async (req, res) => {
         total_discount: trip.total_discount,
         total_income: trip.total_income,
         total_luggage: trip.total_luggage,
-        routes: routeMatch ? routeMatch.routes : []
+        routes: routeMatch ? routeMatch.routes : [],
       };
     });
 
@@ -439,14 +451,20 @@ export const getConductorTripSummaryByDate = async (req, res) => {
         acc.total_luggage += trip.total_luggage;
         return acc;
       },
-      { ticket_count: 0, base_fare: 0, total_discount: 0, total_income: 0, total_luggage: 0 }
+      {
+        ticket_count: 0,
+        base_fare: 0,
+        total_discount: 0,
+        total_income: 0,
+        total_luggage: 0,
+      }
     );
 
     res.status(200).json({
       message: "Trip-wise summary fetched successfully",
       date: targetDate.toISOString().split("T")[0],
       tripSummary: merged,
-      total: totals
+      total: totals,
     });
   } catch (error) {
     console.error("Error fetching trip summary:", error);
