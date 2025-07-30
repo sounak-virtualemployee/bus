@@ -465,7 +465,7 @@ export const getConductorTripSummaryByDate = async (req, res) => {
     res.status(200).json({
       message: "Trip-wise summary fetched successfully",
       date: targetDate.toISOString().split("T")[0],
-      conductor_name: conductor?.name || "",
+      conductorName: conductor?.name || "",
       tripSummary: merged,
       total: totals,
     });
