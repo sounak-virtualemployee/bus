@@ -141,7 +141,7 @@ export const uploadFareExcel = async (req, res) => {
 
 export const getFareAmount = async (req, res) => {
   const dbName = req.conductor.company_name;
-  const Fare = getModel(dbName, 'Price');
+  const Fare = getModel("Pratima", 'Price');
   const { pathId, from, to, reverse } = req.body;
 
   try {
