@@ -238,7 +238,7 @@ const toIST = (iso) => {
 
 export const createTicketsExcelLink = async (req, res) => {
   try {
-    // company scoping from admin token
+    // tenant from your existing middleware
     const company_name = req.admin?.company_name;
     if (!company_name) {
       return res.status(401).json({ message: 'Unauthorized: company not found on token' });
@@ -247,22 +247,14 @@ export const createTicketsExcelLink = async (req, res) => {
     // tenant-scoped model
     const Ticket = getModel(company_name, 'Ticket');
 
-    const { conductor_id, from, to, trip } = req.body || {};
-
-    // validate
+    // only conductor_id
+    const { conductor_id } = req.body || {};
     if (!conductor_id || !mongoose.isValidObjectId(conductor_id)) {
       return res.status(400).json({ message: 'Valid conductor_id is required' });
     }
 
-    // query
+    // fetch all tickets for this conductor
     const query = { conductor_id: new mongoose.Types.ObjectId(conductor_id) };
-    if (from || to) {
-      query.createdAt = {};
-      if (from) query.createdAt.$gte = new Date(`${from}T00:00:00.000Z`);
-      if (to)   query.createdAt.$lte = new Date(`${to}T23:59:59.999Z`);
-    }
-    if (trip) query.trip = trip;
-
     const tickets = await Ticket.find(query).sort({ createdAt: 1 }).lean();
 
     // workbook
@@ -333,6 +325,7 @@ export const createTicketsExcelLink = async (req, res) => {
 
     ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: ws.columnCount } };
 
+    // filename + write
     const stamp = new Intl.DateTimeFormat('en-GB', {
       timeZone: 'Asia/Kolkata',
       year: 'numeric',
@@ -344,11 +337,12 @@ export const createTicketsExcelLink = async (req, res) => {
       hour12: false,
     }).format(new Date()).replace(/[/: ]/g, '-');
 
-    const fname = `tickets_${company_name}_${conductor_id}${from ? `_from-${from}` : ''}${to ? `_to-${to}` : ''}${trip ? `_trip-${trip}` : ''}_${stamp}_${nanoid(8)}.xlsx`;
+    const fname = `tickets_${company_name}_${conductor_id}_${stamp}_${nanoid(8)}.xlsx`;
     const filePath = path.join(EXPORT_DIR, fname);
 
     await fs.promises.writeFile(filePath, await wb.xlsx.writeBuffer());
 
+    // public URL (served by app.use('/public', express.static('public')))
     const url = `${DOMAIN}/public/exports/${fname}`;
     return res.json({ url, filename: fname, count: tickets.length });
   } catch (err) {
@@ -356,6 +350,7 @@ export const createTicketsExcelLink = async (req, res) => {
     return res.status(500).json({ message: 'Failed to create Excel link', error: err?.message });
   }
 };
+
 
 
 
