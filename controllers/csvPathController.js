@@ -6,7 +6,7 @@ import { getModel } from '../config/dbConnection.js';
 import mongoose from 'mongoose';
 import { nanoid } from 'nanoid';
 import { fileURLToPath } from 'url';
-
+// ⬇️ adjust this import to wherever your getModel comes from
 
 
 const BASE_URL = process.env.DOMAIN;
@@ -206,19 +206,18 @@ export const getFareAmount = async (req, res) => {
 };
 
 
+// controllers/ticketExportController.js
 
-// __dirname replacement in ESM
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Where Excel files will be stored publicly
+// Public export dir (served by: app.use('/public', express.static('public')))
 const EXPORT_DIR = path.join(__dirname, '..', 'public', 'exports');
 fs.mkdirSync(EXPORT_DIR, { recursive: true });
 
-// Your public domain for building file links
 const DOMAIN = process.env.DOMAIN || 'https://ticket.quicksparkz.in';
 
-// Helper to format IST date/time
 const toIST = (iso) => {
   const d = new Date(iso);
   const date_ist = new Intl.DateTimeFormat('en-GB', {
@@ -237,19 +236,25 @@ const toIST = (iso) => {
   return { date_ist, time_ist };
 };
 
-// Controller: POST /api/tickets/export/link
 export const createTicketsExcelLink = async (req, res) => {
-     const company_name = req.admin.company_name;
-    const Ticket = getModel(company_name, "Ticket");
   try {
+    // company scoping from admin token
+    const company_name = req.admin?.company_name;
+    if (!company_name) {
+      return res.status(401).json({ message: 'Unauthorized: company not found on token' });
+    }
+
+    // tenant-scoped model
+    const Ticket = getModel(company_name, 'Ticket');
+
     const { conductor_id, from, to, trip } = req.body || {};
 
-    // Validate conductor_id
+    // validate
     if (!conductor_id || !mongoose.isValidObjectId(conductor_id)) {
       return res.status(400).json({ message: 'Valid conductor_id is required' });
     }
 
-    // Build query
+    // query
     const query = { conductor_id: new mongoose.Types.ObjectId(conductor_id) };
     if (from || to) {
       query.createdAt = {};
@@ -258,36 +263,35 @@ export const createTicketsExcelLink = async (req, res) => {
     }
     if (trip) query.trip = trip;
 
-    // Fetch tickets
     const tickets = await Ticket.find(query).sort({ createdAt: 1 }).lean();
 
-    // Build workbook
+    // workbook
     const wb = new ExcelJS.Workbook();
     wb.creator = 'TicketApp';
     wb.created = new Date();
     const ws = wb.addWorksheet('Tickets');
 
     ws.columns = [
-      { header:'Ticket No', key:'ticket_no', width:16 },
-      { header:'Company', key:'company_name', width:18 },
-      { header:'Bus No', key:'bus_no', width:14 },
-      { header:'From', key:'from', width:16 },
-      { header:'To', key:'to', width:16 },
-      { header:'Count', key:'count', width:8 },
-      { header:'Fare', key:'fare', width:10 },
-      { header:'Discount', key:'discount', width:10 },
-      { header:'Luggage', key:'luggage', width:10 },
-      { header:'Total', key:'total', width:10 },
-      { header:'Trip', key:'trip', width:10 },
-      { header:'Mobile', key:'mobile', width:16 },
-      { header:'Date (IST)', key:'date_ist', width:14 },
-      { header:'Time (IST)', key:'time_ist', width:14 },
-      { header:'Created At (ISO)', key:'createdAt', width:24 },
+      { header: 'Ticket No', key: 'ticket_no', width: 16 },
+      { header: 'Company', key: 'company_name', width: 18 },
+      { header: 'Bus No', key: 'bus_no', width: 14 },
+      { header: 'From', key: 'from', width: 16 },
+      { header: 'To', key: 'to', width: 16 },
+      { header: 'Count', key: 'count', width: 8 },
+      { header: 'Fare', key: 'fare', width: 10 },
+      { header: 'Discount', key: 'discount', width: 10 },
+      { header: 'Luggage', key: 'luggage', width: 10 },
+      { header: 'Total', key: 'total', width: 10 },
+      { header: 'Trip', key: 'trip', width: 10 },
+      { header: 'Mobile', key: 'mobile', width: 16 },
+      { header: 'Date (IST)', key: 'date_ist', width: 14 },
+      { header: 'Time (IST)', key: 'time_ist', width: 14 },
+      { header: 'Created At (ISO)', key: 'createdAt', width: 24 },
     ];
     ws.getRow(1).font = { bold: true };
 
-    // Add rows
     let sumFare = 0, sumDisc = 0, sumLug = 0, sumTotal = 0, sumCount = 0;
+
     for (const t of tickets) {
       const { date_ist, time_ist } = toIST(t.createdAt);
       ws.addRow({
@@ -307,6 +311,7 @@ export const createTicketsExcelLink = async (req, res) => {
         time_ist,
         createdAt: new Date(t.createdAt).toISOString(),
       });
+
       sumFare  += +t.fare || 0;
       sumDisc  += +t.discount || 0;
       sumLug   += +t.luggage || 0;
@@ -314,10 +319,9 @@ export const createTicketsExcelLink = async (req, res) => {
       sumCount += +t.count || 0;
     }
 
-    // Add totals row
     if (tickets.length) {
       const r = ws.addRow({
-        ticket_no:'TOTALS',
+        ticket_no: 'TOTALS',
         count: sumCount,
         fare: sumFare,
         discount: sumDisc,
@@ -327,33 +331,26 @@ export const createTicketsExcelLink = async (req, res) => {
       r.font = { bold: true };
     }
 
-    ws.autoFilter = {
-      from: { row: 1, column: 1 },
-      to: { row: 1, column: ws.columnCount },
-    };
+    ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: ws.columnCount } };
 
-    // Filename
     const stamp = new Intl.DateTimeFormat('en-GB', {
-      timeZone:'Asia/Kolkata',
-      year:'numeric',
-      month:'2-digit',
-      day:'2-digit',
-      hour:'2-digit',
-      minute:'2-digit',
-      second:'2-digit',
-      hour12:false
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
     }).format(new Date()).replace(/[/: ]/g, '-');
 
-    const fname = `tickets_${conductor_id}${from?`_from-${from}`:''}${to?`_to-${to}`:''}${trip?`_trip-${trip}`:''}_${stamp}_${nanoid(8)}.xlsx`;
+    const fname = `tickets_${company_name}_${conductor_id}${from ? `_from-${from}` : ''}${to ? `_to-${to}` : ''}${trip ? `_trip-${trip}` : ''}_${stamp}_${nanoid(8)}.xlsx`;
     const filePath = path.join(EXPORT_DIR, fname);
 
-    // Save file
     await fs.promises.writeFile(filePath, await wb.xlsx.writeBuffer());
 
-    // Return public link
     const url = `${DOMAIN}/public/exports/${fname}`;
     return res.json({ url, filename: fname, count: tickets.length });
-
   } catch (err) {
     console.error('export link error:', err);
     return res.status(500).json({ message: 'Failed to create Excel link', error: err?.message });
