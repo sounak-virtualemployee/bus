@@ -208,7 +208,6 @@ export const getFareAmount = async (req, res) => {
 
 // controllers/ticketExportController.js
 
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -216,7 +215,7 @@ const __dirname = path.dirname(__filename);
 const EXPORT_DIR = path.join(__dirname, '..', 'public', 'exports');
 fs.mkdirSync(EXPORT_DIR, { recursive: true });
 
-const DOMAIN = process.env.DOMAIN || 'https://ticket.quicksparkz.in';
+const DOMAIN = process.env.DOMAIN || 'https://bus.quicksparkz.in';
 
 const toIST = (iso) => {
   const d = new Date(iso);
@@ -350,7 +349,3 @@ export const createTicketsExcelLink = async (req, res) => {
     return res.status(500).json({ message: 'Failed to create Excel link', error: err?.message });
   }
 };
-
-
-
-
